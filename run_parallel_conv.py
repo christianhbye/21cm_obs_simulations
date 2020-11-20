@@ -20,7 +20,7 @@ if not os.path.exists(save_folder) or not 'save_file_hdf5' in os.listdir(save_fo
         hf.create_dataset('EL',  data = EL)
     os.chdir(work_dir)
 
-freq_array_X, AZ_beam, EL_beam, Et_shifted, Ep_shifted, gain_shifted = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
+freq_array_X, AZ_beam, EL_beam, Et_shifted, Ep_shifted, gain_shifted = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 150)
 freq_array_X /= 1e6 # convert to MHz
 
 lst_az_el_file = save_folder+'/save_file_hdf5'
@@ -42,7 +42,7 @@ LST, AZ_lst, EL_lst = gen.read_hdf5_LST_AZ_EL(lst_az_el_file)
 
 lst_out, freq_out, conv_out, ant_temp_out = ast.parallel_convolution(LST, freq_array, AZ_beam, EL_beam, beam_all, AZ_lst, EL_lst, sky_model, 40, normalization='yes', normalization_solid_angle_above_horizon_freq=1)
 
-with h5py.File(save_folder+'/save_parallel_convolution', 'w') as hf:
+with h5py.File(save_folder+'/save_parallel_convolution_150', 'w') as hf:
     hf.create_dataset('LST_out', data = lst_out)
     hf.create_dataset('freq_out',  data = freq_out)
     hf.create_dataset('conv_out',  data = conv_out)
