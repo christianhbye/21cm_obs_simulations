@@ -7,23 +7,37 @@ def read_hdf5(fname, varname):
     path = 'no_git_files/sky_models/map_az_el_lst/' + fname
     with h5py.File(path, 'r') as hf:
         var = hf.get(varname)
-    var_arr = np.array(var)
+        var_arr = np.array(var)
     return var_arr
 
-def plot_temp(freq_vector, temp_array, LST):
+def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs):
     '''
     Plot antenna temperature vs frequency at given LST
     '''
     plt.figure()
-    plt.plot(freq_vector, temp_array[LST ])
+    for LST in LST_idxs:
+        LST_val = round(LST_vec[LST], 7)
+        lab = 'LST = ' + str(LST_val)
+        plt.plot(freq_vector, temp_array[LST, :], label=lab)
+    plt.xlabel('Frequency')
+    plt.ylabel('Antenna temperature')
+    plt.title('Temperature vs Frequency')
+    plt.legend()
     plt.show()
 
 def plot_temp_3d(freq_vector, temp_array, LST_vector):
     plt.figure()
-    plt.imshow(temp_array, extent=)
+    freq_min = freq_vector[0]
+    freq_max = freq_vector[-1]
+    LST_min = LST_vector[0]
+    LST_max = LST_vector[-1]
+    plt.imshow(temp_array, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min])
+    plt.title('Antenna Temperature')
+    plt.ylabel('LST')
+    plt.xlabel('Frequency (MHz)')
     plt.show()
 
-def compute_rms(freq_vector, temp_array, Nfg_array=[1, 2, 3, 4, 5], frequency_normalization=100, noise_normalization=0.1, noise=False):
+def compute_rms(frequency_vector, temp_array, Nfg_array=[1, 2, 3, 4, 5], frequency_normalization=100, noise_normalization=0.1, noise=False):
     rms_values = np.empty((len(temp_array), len(Nfg_array)))
 
     for Nfg in Nfg_array:
