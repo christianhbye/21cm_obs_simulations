@@ -20,7 +20,14 @@ if not os.path.exists(save_folder) or not 'save_file_hdf5' in os.listdir(save_fo
         hf.create_dataset('EL',  data = EL)
     os.chdir(work_dir)
 
-for i in range(6):
+delta_phi = 30 # when sweeping azimuth angles, phi increments by this number each iteration
+N_angles = int(180/delta_phi) # number of angles
+master_lst = []
+master_freq = []
+master_conv = []
+master_ant_temp = []
+ 
+for i in range(N_angles):
     azimuth = i * 30
 
     freq_array_X, AZ_beam, EL_beam, Et_shifted, Ep_shifted, gain_shifted = gen.read_beam_FEKO('no_git_files/blade_dipole.out', azimuth)
@@ -29,7 +36,7 @@ for i in range(6):
     lst_az_el_file = save_folder+'/save_file_hdf5'
 
     # Beam
-    beam_all_X = gain_shifted
+    beam_all_X = np.copy(gain_shifted)
     FLOW         = 40 
     FHIGH        = 120
     freq_array   = freq_array_X[(freq_array_X >= FLOW) & (freq_array_X <= FHIGH)]
@@ -44,9 +51,18 @@ for i in range(6):
     LST, AZ_lst, EL_lst = gen.read_hdf5_LST_AZ_EL(lst_az_el_file)
 
     lst_out, freq_out, conv_out, ant_temp_out = ast.parallel_convolution(LST, freq_array, AZ_beam, EL_beam, beam_all, AZ_lst, EL_lst, sky_model, 40, normalization='yes', normalization_solid_angle_above_horizon_freq=1)
+    master_lst.append(lst_out)
+    master_freq.append(freq_out)
+    master_conv.append(conv_out)
+    master_ant_temp.append(ant_temp_out)
 
-    with h5py.File(save_folder+'/save_parallel_convolution_'+str(azimuth), 'w') as hf:
-        hf.create_dataset('LST_out', data = lst_out)
-        hf.create_dataset('freq_out',  data = freq_out)
-        hf.create_dataset('conv_out',  data = conv_out)
-        hf.create_dataset('ant_temp_out',  data = ant_temp_out)
+master_lst = np.array(master_lst)
+master_freq = np.array(master_freq)
+master_conv = np.array(master_conv)
+master_ant_temp = np.array(master_ant_temp)
+
+with h5py.File(save_folder+'/save_parallel_convolution', 'w') as hf:
+    hf.create_dataset('LST_out', data = master_lst)
+    hf.create_dataset('freq_out',  data = master_freq)
+    hf.create_dataset('conv_out',  data = master_conv)
+    hf.create_dataset('ant_temp_out',  data = master_ant_temp)

@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 
 
 def read_hdf5(azimuth, varname):
-    path = 'no_git_files/sky_models/map_az_el_lst/save_parallel_convolution_' + str(azimuth)
+    path = 'no_git_files/sky_models/map_az_el_lst/save_parallel_convolution')
     with h5py.File(path, 'r') as hf:
         var = hf.get(varname)
         var_arr = np.array(var)
-    return var_arr
+    idx = azimuth/180
+    return var_arr[idx]
 
 def get_ftl(azimuth):
     f = read_hdf5(azimuth, 'freq_out')
@@ -53,7 +54,7 @@ def plot_temp_3d(freq_vector, temp_array, LST_vector, azimuth, save=False):
 
 def compute_rms(frequency_vector, temp_array, Nfg_array=[1, 2, 3, 4, 5], frequency_normalization=100, noise_normalization=0.1, noise=False):
     rms_values = np.empty((len(temp_array), len(Nfg_array)))
-
+    residuals = np.empty((len(Nfg_array), len(temp_array[:, 0]), len(temp_array[0, :])))
     for j, Nfg in enumerate(Nfg_array):
         for i in range(len(temp_array)):
             temperature_vector = temp_array[i, :]
@@ -66,12 +67,12 @@ def compute_rms(frequency_vector, temp_array, Nfg_array=[1, 2, 3, 4, 5], frequen
             p = gen.fit_polynomial_fourier('LINLOG', frequency_vector/frequency_normalization, temperature_vector, int(Nfg), Weights=1/(standard_deviation_vector**2))
             m = gen.model_evaluate('LINLOG', p[0], frequency_vector/frequency_normalization)
             r = temperature_vector - m
-
+            residuals[j, i, :] = r
             # compute rms of r
             rms = np.sqrt(np.sum(r**2)/len(r))
             rms_values[i, j] = rms
 
-    return rms_values
+    return rms_values, residuals
 
 def plot_rms(rms_values, Nfg_split=3):
     plt.figure()
