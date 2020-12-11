@@ -1,6 +1,7 @@
 import astro as ast
 import general as gen
 import h5py
+import numpy as np
 import os
 
 map_file = 'no_git_files/haslam408_ds_Remazeilles2014.fits'
@@ -20,21 +21,29 @@ if not os.path.exists(save_folder) or not 'save_file_hdf5' in os.listdir(save_fo
         hf.create_dataset('EL',  data = EL)
     os.chdir(work_dir)
 
+start_angle = 0 # first azimuth angle
 delta_phi = 30 # when sweeping azimuth angles, phi increments by this number each iteration
-N_angles = int(180/delta_phi) # number of angles
+N_angles = int((180 - start_angle)/delta_phi)
 master_lst = []
 master_freq = []
 master_conv = []
 master_ant_temp = []
- 
-for i in range(N_angles):
-    azimuth = i * 30
 
+print('Start, delta, N:')
+print(start_angle)
+print(delta_phi)
+print(N_angles)
+
+for i in range(N_angles):
+    azimuth = i * delta_phi + start_angle
+    print('azimuth ={}'.format(azimuth))
     freq_array_X, AZ_beam, EL_beam, Et_shifted, Ep_shifted, gain_shifted = gen.read_beam_FEKO('no_git_files/blade_dipole.out', azimuth)
     freq_array_X /= 1e6 # convert to MHz
 
     lst_az_el_file = save_folder+'/save_file_hdf5'
-
+    print(freq_array_X.shape)
+    print(AZ_beam.shape)
+    print(gain_shifted.shape)
     # Beam
     beam_all_X = np.copy(gain_shifted)
     FLOW         = 40 
@@ -42,14 +51,14 @@ for i in range(N_angles):
     freq_array   = freq_array_X[(freq_array_X >= FLOW) & (freq_array_X <= FHIGH)]
     beam_all     = beam_all_X[(freq_array_X >= FLOW) & (freq_array_X <= FHIGH), :, 0:-1] # cut out last col because 0 = 360
     AZ_beam = AZ_beam[0:-1] # cut out last column, same as for beam_all
-
+    print('Sky model')
     # Sky model
     map_freq = 408
     sky_model = ast.map_power_law(map_orig, map_freq, lon, lat, freq_array, spectral_index_lat_model='step', lat_edge_deg=10, index_inband=2.5, index_outband=2.5, sigma_deg=8.5, index_center=2.4, index_pole=2.65)
-
+    print('Local coords')
     # Local Coordinates
     LST, AZ_lst, EL_lst = gen.read_hdf5_LST_AZ_EL(lst_az_el_file)
-
+    print('Convolution')
     lst_out, freq_out, conv_out, ant_temp_out = ast.parallel_convolution(LST, freq_array, AZ_beam, EL_beam, beam_all, AZ_lst, EL_lst, sky_model, 40, normalization='yes', normalization_solid_angle_above_horizon_freq=1)
     master_lst.append(lst_out)
     master_freq.append(freq_out)
