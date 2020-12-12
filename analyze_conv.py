@@ -19,7 +19,7 @@ def read_hdf5(azimuth, varname):
         var_arr = np.array(var)
     return var_arr[0]
 
-def get_ftl(azimuth, new=False):
+def get_ftl(azimuth, new=False, return_fl=True, return_t=True):
     if not new:
         f = read_hdf5(azimuth, 'freq_out')
         t = read_hdf5(azimuth, 'ant_temp_out')
@@ -28,7 +28,15 @@ def get_ftl(azimuth, new=False):
         f = new_read_hdf5(azimuth, 'freq_out')
         t = new_read_hdf5(azimuth, 'ant_temp_out')
         lst = new_read_hdf5(azimuth, 'LST_out')
-    return f, t, lst
+    if return_fl and return_t:
+        return f, t, lst
+    elif return_fl and not return_t:
+        return f, lst
+    elif not return_fl and return_t:
+        return t
+    else:
+        print('Nothing returned! Change kwargs return_fl and and return_t!')
+        return None
 
 def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, save=False):
     '''
@@ -86,24 +94,40 @@ def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_norma
 
     return rms_values, residuals
 
-def plot_rms(rms_values, Nfg_split=3):
+def plot_rms(lst, rms_values, phi, flow=50, fhigh=100, Nfg_split=3):
     plt.figure()
-    plt.plot(rms_values[:, :Nfg_split]) # 3 parameters
+    plt.plot(lst, rms_values[:, :Nfg_split]) # 3 parameters
+    leg_v = np.arange(Nfg_split)
+    leg = [str(n+1) for n in leg_v]
+    l1 = plt.legend(leg, title='Number of parameters:')
+    l1._legend_box.align = 'left'
+    plt.title(r'RMS (${} \leq \nu \leq {}$) vs LST at $\phi = {}$'.format(flow, fhigh, phi))
+    plt.xlabel('LST (hours)')
+    plt.ylabel('RMS (Kelvin)')
+    plt.xlim(np.min(lst)-.5, np.max(lst)+.5)
     plt.show()
     plt.figure()
-    plt.plot(rms_values[:, Nfg_split:])
+    plt.title(r'RMS (${} \leq \nu \leq {}$) vs LST at $\phi = {}$'.format(flow, fhigh, phi))
+    plt.xlabel('LST (hours)')
+    plt.ylabel('RMS (Kelvin)')
+    plt.xlim(np.min(lst)-.5, np.max(lst)+.5)
+    plt.plot(lst, rms_values[:, Nfg_split:])
+    leg_v = np.arange(Nfg_split, rms_values.shape[-1])
+    leg = [str(n+1) for n in leg_v]
+    l2 = plt.legend(leg, title='Number of parameters:')
+    l2._legend_box.align = 'left'
     plt.show()
 
 def plot_rms_comparision(azimuths, flow=50, fhigh=100, Nfg=5):
-    n_angles = len(azimuths)
-    rms_arr = np.empty(n_angles)
+    f, l = get_ftl(0, return_t=False)
     plt.figure()
-    for i, phi in enumerate(azimuths):
-        f, t, l = get_ftl(azimuth)
-        rms_arr[i] = compute_rms(f, t, flow, fhigh, Nfg_array = [Nfg])
-        plt.plot(l, rms_arr, label=r'$\phi$ = {}'.format(azimuth))
+    for i, azimuth in enumerate(azimuths):
+        t = get_ftl(azimuth, return_fl=False)
+        rms = compute_rms(f, t, flow, fhigh, Nfg_array = [Nfg])[0]
+        plt.plot(l, rms, label=r'$\phi$ = {}'.format(azimuth))
     plt.legend()
     plt.xlabel('LST (hours)')
     plt.ylabel('RMS (Kelvin)')
-    plt.title('RMS vs LST')
+    plt.title(r'RMS (${} \leq \nu \leq {}$) vs LST for {:d}-term fit'.format(flow, fhigh, Nfg))
+    plt.xlim(np.min(l)-0.5, np.max(l)+0.5)
     plt.show()
