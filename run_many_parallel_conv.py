@@ -21,8 +21,8 @@ if not os.path.exists(save_folder) or not 'save_file_hdf5' in os.listdir(save_fo
         hf.create_dataset('EL',  data = EL)
     os.chdir(work_dir)
 
-start_angle = 0 # first azimuth angle
-delta_phi = 30 # when sweeping azimuth angles, phi increments by this number each iteration
+start_angle = 150 # first azimuth angle
+delta_phi = 180-150 # when sweeping azimuth angles, phi increments by this number each iteration
 N_angles = int((180 - start_angle)/delta_phi)
 master_lst = []
 master_freq = []
@@ -36,7 +36,7 @@ print(N_angles)
 
 for i in range(N_angles):
     azimuth = i * delta_phi + start_angle
-    print('azimuth ={}'.format(azimuth))
+    print('azimuth = {}'.format(azimuth))
     freq_array_X, AZ_beam, EL_beam, Et_shifted, Ep_shifted, gain_shifted = gen.read_beam_FEKO('no_git_files/blade_dipole.out', azimuth)
     freq_array_X /= 1e6 # convert to MHz
 
@@ -70,7 +70,7 @@ master_freq = np.array(master_freq)
 master_conv = np.array(master_conv)
 master_ant_temp = np.array(master_ant_temp)
 
-with h5py.File(save_folder+'/save_parallel_convolution', 'w') as hf:
+with h5py.File(save_folder+'/save_parallel_convolution_150', 'w') as hf:
     hf.create_dataset('LST_out', data = master_lst)
     hf.create_dataset('freq_out',  data = master_freq)
     hf.create_dataset('conv_out',  data = master_conv)

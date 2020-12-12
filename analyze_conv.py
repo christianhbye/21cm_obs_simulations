@@ -19,10 +19,15 @@ def read_hdf5(azimuth, varname):
         var_arr = np.array(var)
     return var_arr[0]
 
-def get_ftl(azimuth):
-    f = read_hdf5(azimuth, 'freq_out')
-    t = read_hdf5(azimuth, 'ant_temp_out')
-    lst = read_hdf5(azimuth, 'LST_out')
+def get_ftl(azimuth, new=False):
+    if not new:
+        f = read_hdf5(azimuth, 'freq_out')
+        t = read_hdf5(azimuth, 'ant_temp_out')
+        lst = read_hdf5(azimuth, 'LST_out')
+    else:
+        f = new_read_hdf5(azimuth, 'freq_out')
+        t = new_read_hdf5(azimuth, 'ant_temp_out')
+        lst = new_read_hdf5(azimuth, 'LST_out')
     return f, t, lst
 
 def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, save=False):
@@ -87,4 +92,18 @@ def plot_rms(rms_values, Nfg_split=3):
     plt.show()
     plt.figure()
     plt.plot(rms_values[:, Nfg_split:])
+    plt.show()
+
+def plot_rms_comparision(azimuths, flow=50, fhigh=100, Nfg=5):
+    n_angles = len(azimuths)
+    rms_arr = np.empty(n_angles)
+    plt.figure()
+    for i, phi in enumerate(azimuths):
+        f, t, l = get_ftl(azimuth)
+        rms_arr[i] = compute_rms(f, t, flow, fhigh, Nfg_array = [Nfg])
+        plt.plot(l, rms_arr, label=r'$\phi$ = {}'.format(azimuth))
+    plt.legend()
+    plt.xlabel('LST (hours)')
+    plt.ylabel('RMS (Kelvin)')
+    plt.title('RMS vs LST')
     plt.show()
