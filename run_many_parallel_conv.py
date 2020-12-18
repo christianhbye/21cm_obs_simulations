@@ -12,8 +12,10 @@ work_dir = '$SCRATCH/21cm_obs_simulations'
 map_orig, lon, lat = ast.map_remazeilles_408MHz(map_file, galactic_coord_file)
 
 if not os.path.exists(save_folder) or not 'save_file_hdf5' in os.listdir(save_folder):
-    LST, AZ, EL = ast.galactic_to_local_coordinates_24h_LST(lon, lat, INST_lat_deg= -26.714778, INST_lon_deg=116.605528, seconds_offset=359)
-    os.makedirs(save_folder)
+    # Edges = -26.714778, MARS = 79.5
+    LST, AZ, EL = ast.galactic_to_local_coordinates_24h_LST(lon, lat, INST_lat_deg= 79.5, INST_lon_deg=116.605528, seconds_offset=359)
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
     os.chdir(save_folder)
     with h5py.File('save_file_hdf5', 'w') as hf:
         hf.create_dataset('LST', data = LST)
@@ -21,13 +23,13 @@ if not os.path.exists(save_folder) or not 'save_file_hdf5' in os.listdir(save_fo
         hf.create_dataset('EL',  data = EL)
     os.chdir(work_dir)
 
-start_angle = 150 # first azimuth angle
-delta_phi = 180-150 # when sweeping azimuth angles, phi increments by this number each iteration
+start_angle = 60 # first azimuth angle
+delta_phi = 30 # when sweeping azimuth angles, phi increments by this number each iteration
 N_angles = int((180 - start_angle)/delta_phi)
-master_lst = []
-master_freq = []
-master_conv = []
-master_ant_temp = []
+# master_lst = []
+# master_freq = []
+# master_conv = []
+# master_ant_temp = []
 
 print('Start, delta, N:')
 print(start_angle)
@@ -59,19 +61,20 @@ for i in range(N_angles):
     # Local Coordinates
     LST, AZ_lst, EL_lst = gen.read_hdf5_LST_AZ_EL(lst_az_el_file)
     print('Convolution')
+#   lst_out, freq_out, ant_temp_out = ast.parallel_convolution(LST, freq_array, AZ_beam, EL_beam, beam_all, AZ_lst, EL_lst, sky_model, 40, normalization='yes', normalization_solid_angle_above_horizon_freq=1)
     lst_out, freq_out, conv_out, ant_temp_out = ast.parallel_convolution(LST, freq_array, AZ_beam, EL_beam, beam_all, AZ_lst, EL_lst, sky_model, 40, normalization='yes', normalization_solid_angle_above_horizon_freq=1)
-    master_lst.append(lst_out)
-    master_freq.append(freq_out)
-    master_conv.append(conv_out)
-    master_ant_temp.append(ant_temp_out)
+#   master_lst.append(lst_out)
+#   master_freq.append(freq_out)
+#   master_conv.append(conv_out)
+#   master_ant_temp.append(ant_temp_out)
 
-master_lst = np.array(master_lst)
-master_freq = np.array(master_freq)
-master_conv = np.array(master_conv)
-master_ant_temp = np.array(master_ant_temp)
+# master_lst = np.array(master_lst)
+# master_freq = np.array(master_freq)
+# master_conv = np.array(master_conv)
+# master_ant_temp = np.array(master_ant_temp)
 
-with h5py.File(save_folder+'/save_parallel_convolution_150', 'w') as hf:
-    hf.create_dataset('LST_out', data = master_lst)
-    hf.create_dataset('freq_out',  data = master_freq)
-    hf.create_dataset('conv_out',  data = master_conv)
-    hf.create_dataset('ant_temp_out',  data = master_ant_temp)
+    with h5py.File(save_folder+'/save_parallel_convolution_MARS_'+str(azimuth), 'w') as hf:
+        hf.create_dataset('LST_out', data = lst_out)
+        hf.create_dataset('freq_out',  data = freq_out)
+        hf.create_dataset('conv_out',  data = conv_out)
+        hf.create_dataset('ant_temp_out',  data = ant_temp_out)

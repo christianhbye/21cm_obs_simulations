@@ -1,33 +1,39 @@
 import h5py
 import numpy as np
+import os
 import general as gen
 import matplotlib.pyplot as plt
 
 
-def new_read_hdf5(azimuth, varname):
-    path = 'no_git_files/sky_models/map_az_el_lst/save_parallel_convolution'
+def new_read_hdf5(azimuth, varname, loc='mars'):
+    # loc = 'Edges' or 'Mars', specifies latitude
+    path = 'no_git_files/sky_models/map_az_el_lst/' + loc + '/save_parallel_convolution'
     with h5py.File(path, 'r') as hf:
         var = hf.get(varname)
         var_arr = np.array(var)
     idx = azimuth/180
     return var_arr[idx]
 
-def read_hdf5(azimuth, varname):
-    path = 'no_git_files/sky_models/map_az_el_lst/save_parallel_convolution_' + str(azimuth)
+def read_hdf5(azimuth, varname, loc):
+    path = 'no_git_files/sky_models/map_az_el_lst/' + loc + '/save_parallel_convolution_' + str(azimuth)
+    print(path)
     with h5py.File(path, 'r') as hf:
+        print([key for key in hf.keys()])
         var=hf.get(varname)
         var_arr = np.array(var)
-    return var_arr[0]
+      #  print(var_arr.shape)
+      #  print(var_arr[0].shape)
+    return var_arr
 
-def get_ftl(azimuth, new=False, return_fl=True, return_t=True):
+def get_ftl(azimuth, loc='mars', new=False, return_fl=True, return_t=True):
     if not new:
-        f = read_hdf5(azimuth, 'freq_out')
-        t = read_hdf5(azimuth, 'ant_temp_out')
-        lst = read_hdf5(azimuth, 'LST_out')
+        f = read_hdf5(azimuth, 'freq_out', loc=loc)
+        t = read_hdf5(azimuth, 'ant_temp_out', loc=loc)
+        lst = read_hdf5(azimuth, 'LST_out', loc=loc)
     else:
-        f = new_read_hdf5(azimuth, 'freq_out')
-        t = new_read_hdf5(azimuth, 'ant_temp_out')
-        lst = new_read_hdf5(azimuth, 'LST_out')
+        f = new_read_hdf5(azimuth, 'freq_out', loc)
+        t = new_read_hdf5(azimuth, 'ant_temp_out', loc)
+        lst = new_read_hdf5(azimuth, 'LST_out', loc)
     if return_fl and return_t:
         return f, t, lst
     elif return_fl and not return_t:
@@ -38,7 +44,7 @@ def get_ftl(azimuth, new=False, return_fl=True, return_t=True):
         print('Nothing returned! Change kwargs return_fl and and return_t!')
         return None
 
-def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, save=False):
+def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, save=False, loc='mars'):
     '''
     Plot antenna temperature vs frequency at given LST
     '''
@@ -52,11 +58,11 @@ def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, save=False):
     plt.title('Temperature vs Frequency \n' r'$\phi = %d$'%azimuth)
     plt.legend()
     if save:
-        plt.savefig('no_git_files/plots/tvf_'+str(azimuth))
+        plt.savefig('plots/' + loc + '/tvf_'+str(azimuth))
     else:
         plt.show()
 
-def plot_temp_3d(freq_vector, temp_array, LST_vector, azimuth, save=False):
+def plot_temp_3d(freq_vector, temp_array, LST_vector, azimuth, save=False, loc='mars'):
     plt.figure()
     freq_min = freq_vector[0]
     freq_max = freq_vector[-1]
@@ -68,7 +74,7 @@ def plot_temp_3d(freq_vector, temp_array, LST_vector, azimuth, save=False):
     plt.xlabel('Frequency (MHz)')
     plt.colorbar()
     if save:
-        plt.savefig('no_git_files/plots/tvf3d_'+str(azimuth))
+        plt.savefig('plots/' + loc +'/temp'+str(azimuth))
     else:
         plt.show()
 
@@ -94,7 +100,7 @@ def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_norma
 
     return rms_values, residuals
 
-def plot_rms(lst, rms_values, phi, flow=50, fhigh=100, Nfg_split=3):
+def plot_rms(lst, rms_values, phi, flow=50, fhigh=100, Nfg_split=3, save=False, loc='mars'):
     plt.figure()
     plt.plot(lst, rms_values[:, :Nfg_split]) # 3 parameters
     leg_v = np.arange(Nfg_split)
@@ -116,13 +122,18 @@ def plot_rms(lst, rms_values, phi, flow=50, fhigh=100, Nfg_split=3):
     leg = [str(n+1) for n in leg_v]
     l2 = plt.legend(leg, title='Number of parameters:')
     l2._legend_box.align = 'left'
+    if save:
+        plt.savefig('plots/' + loc +'/rms_plots/rms'+str(phi))
     plt.show()
 
-def plot_rms_comparision(azimuths, flow=50, fhigh=100, Nfg=5):
-    f, l = get_ftl(0, return_t=False)
+def plot_rms_comparision(azimuths, loc='mars', flow=50, fhigh=100, Nfg=5, save=False):
+    f, l = get_ftl(0, loc=loc, return_t=False)
+    print(f.shape)
+    print(l.shape)
     plt.figure()
     for i, azimuth in enumerate(azimuths):
-        t = get_ftl(azimuth, return_fl=False)
+        t = get_ftl(azimuth, loc=loc, return_fl=False)
+        print(t.shape)
         rms = compute_rms(f, t, flow, fhigh, Nfg_array = [Nfg])[0]
         plt.plot(l, rms, label=r'$\phi$ = {}'.format(azimuth))
     plt.legend()
@@ -130,4 +141,6 @@ def plot_rms_comparision(azimuths, flow=50, fhigh=100, Nfg=5):
     plt.ylabel('RMS (Kelvin)')
     plt.title(r'RMS (${} \leq \nu \leq {}$) vs LST for {:d}-term fit'.format(flow, fhigh, Nfg))
     plt.xlim(np.min(l)-0.5, np.max(l)+0.5)
+    if save:
+        plt.savefig('plots/' + loc +'/rms_comparison'+str(azimuth))
     plt.show()
