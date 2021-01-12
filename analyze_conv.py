@@ -21,9 +21,10 @@ def read_hdf5(azimuth, varname, loc):
 #        print([key for key in hf.keys()])
         var=hf.get(varname)
         var_arr = np.array(var)
-      #  print(var_arr.shape)
-      #  print(var_arr[0].shape)
-    return var_arr
+    if loc == 'edges':
+        return var_arr[0]
+    else:
+       return var_arr
 
 def get_ftl(azimuth, loc='mars', new=False, return_fl=True, return_t=True):
     if not new:
@@ -62,22 +63,19 @@ def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, save=False, l
     else:
         plt.show()
 
-def plot_temp_3d(freq_vector, temp_array, LST_vector, azimuth, save=False, loc='mars'):
-    if len(temp_array.shape) == 3 and temp_array.shape[0] == 1:
-        print("Shape of temp array is " + str(temp_array.shape))
-        temp_array2 = float(temp_array[0])
-        print("Shape of temp array is " + str(temp_array2.shape))     
-    else:
-        print("er vel her")
-        temp_array2 = temp_array.copy()   
+def plot_temp_3d(freq_vector, temp_array, LST_vector, azimuth, save=False, loc='mars'):   
     plt.figure()
     freq_min = freq_vector[0]
-    print("a")
     freq_max = freq_vector[-1]
     LST_min = LST_vector[0]
     LST_max = LST_vector[-1]
-    print("er vi her")
-    plt.imshow(temp_array2, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min])
+    print(temp_array.shape)
+    print(temp_array)
+    print(freq_min)
+    print(freq_max)
+    print(LST_max)
+    print(LST_min)
+    plt.imshow(temp_array, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min])
     plt.title('Antenna Temperature \n' r'$\phi = %d$'%azimuth)
     plt.ylabel('LST')
     plt.xlabel('Frequency [MHz]')
@@ -93,31 +91,12 @@ def plot_temp_3d(freq_vector, temp_array, LST_vector, azimuth, save=False, loc='
 
 def plot_waterfalls_diff(azimuths=[0, 30, 60, 90, 120, 150], ref_azimuth=0, loc='mars', save=False):
     f0, t0, l0 = get_ftl(ref_azimuth, loc=loc)
-    if len(t0.shape) == 3 and t0.shape[0] == 1:
-        print("Shape of temp array is " + str(t0.shape))
-        t00 = t0[0].copy()
-        print("Shape of temp array is " + str(t00.shape))
-    else:
-        t00 = t0       
-    print(t00.shape)
-    print(type(t00))
-    print(t00) 
     for phi in azimuths:
         if phi == ref_azimuth:
-            print(t00.shape)
-            print(t00.dtype)
-            plot_temp_3d(f0, t00, l0, phi, save=save, loc=loc)
+            plot_temp_3d(f0, t0, l0, phi, save=save, loc=loc)
         else:
             f, t, l = get_ftl(phi, loc=loc)
-            if len(temp_array.shape) == 3 and temp_array.shape[0] == 1:
-                print("Shape of temp array is " + str(t.shape))
-                t2 = t[0].copy()       
-                print("Shape of temp array is " + str(t2.shape))
-            else:
-                t2 = t
-            print(type(t2))
-            print(t2)
-            dt = t2 - t00
+            dt = t - t0
             assert f.all() == f0.all() and l.all() == l0.all(), "incompatible frequency/lst"
             plt.figure()
             freq_min = f[0]
