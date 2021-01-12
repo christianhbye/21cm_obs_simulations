@@ -1,3 +1,4 @@
+
 import h5py
 import numpy as np
 import os
@@ -16,9 +17,8 @@ def new_read_hdf5(azimuth, varname, loc='mars'):
 
 def read_hdf5(azimuth, varname, loc):
     path = 'no_git_files/sky_models/map_az_el_lst/' + loc + '/save_parallel_convolution_' + str(azimuth)
-    print(path)
     with h5py.File(path, 'r') as hf:
-        print([key for key in hf.keys()])
+#        print([key for key in hf.keys()])
         var=hf.get(varname)
         var_arr = np.array(var)
       #  print(var_arr.shape)
@@ -63,6 +63,10 @@ def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, save=False, l
         plt.show()
 
 def plot_temp_3d(freq_vector, temp_array, LST_vector, azimuth, save=False, loc='mars'):
+    if len(temp_array.shape) == 3 and temp_array.shape[0] == 1:
+        print("Shape of temp array is " + str(temp_array.shape))
+        temp_array = temp_array[0]
+        print("Shape of temp array is " + str(temp_array.shape))        
     plt.figure()
     freq_min = freq_vector[0]
     freq_max = freq_vector[-1]
@@ -71,11 +75,50 @@ def plot_temp_3d(freq_vector, temp_array, LST_vector, azimuth, save=False, loc='
     plt.imshow(temp_array, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min])
     plt.title('Antenna Temperature \n' r'$\phi = %d$'%azimuth)
     plt.ylabel('LST')
-    plt.xlabel('Frequency (MHz)')
-    plt.colorbar()
+    plt.xlabel('Frequency [MHz]')
+    cbar = plt.colorbar()
+    cbar.set_label("Antenna Teperature [K]")
     if save:
-        plt.savefig('plots/' + loc +'/temp'+str(azimuth))
+        try:
+            plt.savefig('plots/' + loc +'/temp'+str(azimuth))
+        except:
+            print("Couldn't save figure, check cwd and if file exists")
     else:
+        plt.draw()
+
+def plot_waterfalls_diff(azimuths=[0, 30, 60, 90, 120, 150], ref_azimuth=0, loc='mars', save=False):
+    f0, t0, l0 = get_ftl(ref_azimuth, loc=loc)
+    if len(t0.shape) == 3 and t0.shape[0] == 1:
+        print("Shape of temp array is " + str(t0.shape))
+        t0 = t0[0]
+        print("Shape of temp array is " + str(t0.shape))        
+    for phi in azimuths:
+        if phi == ref_azimuth:
+            plot_temp_3d(f0, t0, l0, phi, save=save, loc=loc)
+        else:
+            f, t, l = get_ftl(phi, loc=loc)
+            if len(temp_array.shape) == 3 and temp_array.shape[0] == 1:
+                print("Shape of temp array is " + str(t.shape))
+                t = t[0]       
+                print("Shape of temp array is " + str(t.shape))
+            dt = t - t0
+            assert f.all() == f0.all() and l.all() == l0.all(), "incompatible frequency/lst"
+            plt.figure()
+            freq_min = f[0]
+            freq_max = f[-1]
+            LST_min = l[0]
+            LST_max = l[-1]
+            plt.imshow(dt, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min])
+            plt.title("Antenna Temperature at " r"$\phi=%d$" "\n" "Relative to Temperature at " r"$\phi=%d$" % (phi, ref_azimuth))
+            plt.ylabel('LST')
+            plt.xlabel('Frequency [MHz]')
+            cbar = plt.colorbar()
+            cbar.set_label(r"$T(\phi=%d) - T(\phi=%d)$ [K]" % (phi, ref_azimuth))
+            if save:
+                plt.savefig('plots/' +loc + '/temp_'+str(phi)+'-'+str(ref_azimuth))
+            else:
+                plt.draw()
+    if not save:
         plt.show()
 
 def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_normalization=100, noise_normalization=0.1, noise=False):
