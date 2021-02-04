@@ -182,3 +182,19 @@ def plot_rms_comparision(azimuths, loc='mars', flow=50, fhigh=100, Nfg=5, save=F
     if save:
         plt.savefig('plots/' + loc +'/rms_comparison'+str(azimuth))
     plt.show()
+
+def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, loc='mars'):
+    # plots for five-term fit
+    f, t, l = get_ftl(azimuth, loc)
+    res = compute_rms(f, t, flow=flow, fhigh=fhigh, Nfg_array=[5])[1]
+    f = f[(f >= flow) & (f <= fhigh)]
+    plt.figure()
+    for lst in lst_for_plot:
+        lst_point = 10 * lst # since resolution is .1 hours
+        plt.plot(f, res[0, lst_point, :], label='LST = {} hrs'.format(lst))
+    plt.xlabel(r'$\nu$ [MHz]')
+    plt.ylabel('T [K]')
+    title_str = r'Residuals vs Freuquency for $\phi={}$'.format(azimuth)
+    plt.title(title_str)
+    plt.legend()
+    plt.show()
