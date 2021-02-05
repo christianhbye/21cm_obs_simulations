@@ -46,7 +46,7 @@ if not os.path.exists(save_folder) or not 'save_file_hdf5' in os.listdir(save_fo
 else:
     print('yet')
 
-start_angle = 0 # first azimuth angle
+start_angle = 60 # first azimuth angle
 delta_phi = 30 # when sweeping azimuth angles, phi increments by this number each iteration
 N_angles = int((180 - start_angle)/delta_phi)
 # master_lst = []
@@ -65,17 +65,17 @@ for i in range(N_angles):
     print('azimuth = {}'.format(azimuth))
     if beam_file[-4:] == '.out':
         freq_array_X, AZ_beam, EL_beam, Et_shifted, Ep_shifted, gain_shifted = gen.read_beam_FEKO(beam_file, azimuth)
+        freq_array_X /= 1e6 # convert to MHz
     elif beam_file[-4:] == '.ra1':
         freq_array_X, AZ_beam, EL_beam, gain_shifted = gen.read_beam_WIPLD(beam_file, azimuth)   
-    freq_array_X /= 1e6 # convert to MHz
-
     lst_az_el_file = save_folder+'/save_file_hdf5'
-    print(freq_array_X.shape)
     # Beam
     beam_all_X = np.copy(gain_shifted)
     FLOW         = 40 
     FHIGH        = 120
     freq_array   = freq_array_X[(freq_array_X >= FLOW) & (freq_array_X <= FHIGH)]
+    print('freq array len')
+    print(len(freq_array))
     beam_all     = beam_all_X[(freq_array_X >= FLOW) & (freq_array_X <= FHIGH), :, 0:-1] # cut out last col because 0 = 360
     AZ_beam = AZ_beam[0:-1] # cut out last column, same as for beam_all
     print('Sky model')
