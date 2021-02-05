@@ -6,14 +6,33 @@ import os
 
 map_file = 'no_git_files/haslam408_ds_Remazeilles2014.fits'
 galactic_coord_file = 'no_git_files/pixel_coords_map_ring_galactic_res9.fits'
-save_folder = 'no_git_files/sky_models/map_az_el_lst'
+
+parent_save = 'no_git_files/sky_models/'
+antenna = bd
+ground_plane = True
+loc = 'mars'
+if antenna == bd:
+    fs = 'blade_dipole'
+    if ground_plane:
+        ss = 'inf_metal_ground_plane'
+        beam_file = 'no_git_files/blade_diploe_infinite_ground_plane.ra1'
+    else:
+        ss = 'no_ground_plane'
+        beam_file = 'no_git_files/blade_dipole.out'
+    path = fs + '/' + ss
+save_folder = parent_save + path + '/' + loc 
+
 work_dir = '$SCRATCH/21cm_obs_simulations'
 
 map_orig, lon, lat = ast.map_remazeilles_408MHz(map_file, galactic_coord_file)
 
 if not os.path.exists(save_folder) or not 'save_file_hdf5' in os.listdir(save_folder):
     # Edges = -26.714778, MARS = 79.5
-    LST, AZ, EL = ast.galactic_to_local_coordinates_24h_LST(lon, lat, INST_lat_deg= 79.5, INST_lon_deg=116.605528, seconds_offset=359)
+    if loc == 'mars':
+        ld = 79.5
+    elif loc == 'edges':
+        ld = -26.714778
+    LST, AZ, EL = ast.galactic_to_local_coordinates_24h_LST(lon, lat, INST_lat_deg= ld, INST_lon_deg=116.605528, seconds_offset=359)
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
     os.chdir(save_folder)
@@ -23,7 +42,7 @@ if not os.path.exists(save_folder) or not 'save_file_hdf5' in os.listdir(save_fo
         hf.create_dataset('EL',  data = EL)
     os.chdir(work_dir)
 
-start_angle = 60 # first azimuth angle
+start_angle = 0 # first azimuth angle
 delta_phi = 30 # when sweeping azimuth angles, phi increments by this number each iteration
 N_angles = int((180 - start_angle)/delta_phi)
 # master_lst = []
@@ -36,10 +55,14 @@ print(start_angle)
 print(delta_phi)
 print(N_angles)
 
+
 for i in range(N_angles):
     azimuth = i * delta_phi + start_angle
     print('azimuth = {}'.format(azimuth))
-    freq_array_X, AZ_beam, EL_beam, Et_shifted, Ep_shifted, gain_shifted = gen.read_beam_FEKO('no_git_files/blade_dipole.out', azimuth)
+    if beam_file[-4:] == '.out':
+        freq_array_X, AZ_beam, EL_beam, Et_shifted, Ep_shifted, gain_shifted = gen.read_beam_FEKO(beam_file, azimuth)
+    elif beam_file[-4:] == '.ra1':
+        freq_array_X, AZ_beam, EL_beam, Et_shifted, Ep_shifted, gain_shifted = gen.read_beam_WIPLD(beam_file, azimuth)   
     freq_array_X /= 1e6 # convert to MHz
 
     lst_az_el_file = save_folder+'/save_file_hdf5'
