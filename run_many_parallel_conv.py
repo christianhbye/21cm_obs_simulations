@@ -7,26 +7,28 @@ import os
 map_file = 'no_git_files/haslam408_ds_Remazeilles2014.fits'
 galactic_coord_file = 'no_git_files/pixel_coords_map_ring_galactic_res9.fits'
 
-parent_save = 'no_git_files/sky_models/'
-antenna = bd
+parent_save = 'no_git_files/'
+antenna = 'bd'
 ground_plane = True
 loc = 'mars'
-if antenna == bd:
+if antenna == 'bd':
     fs = 'blade_dipole'
     if ground_plane:
         ss = 'inf_metal_ground_plane'
-        beam_file = 'no_git_files/blade_diploe_infinite_ground_plane.ra1'
+        beam_file = 'no_git_files/blade_dipole_infinite_ground_plane.ra1'
     else:
         ss = 'no_ground_plane'
         beam_file = 'no_git_files/blade_dipole.out'
     path = fs + '/' + ss
-save_folder = parent_save + path + '/' + loc 
+save_folder = parent_save + 'sky_models/' + path + '/' + loc 
+print(save_folder)
 
 work_dir = '$SCRATCH/21cm_obs_simulations'
 
 map_orig, lon, lat = ast.map_remazeilles_408MHz(map_file, galactic_coord_file)
 
 if not os.path.exists(save_folder) or not 'save_file_hdf5' in os.listdir(save_folder):
+    print('niet')
     # Edges = -26.714778, MARS = 79.5
     if loc == 'mars':
         ld = 79.5
@@ -41,6 +43,8 @@ if not os.path.exists(save_folder) or not 'save_file_hdf5' in os.listdir(save_fo
         hf.create_dataset('AZ',  data = AZ)
         hf.create_dataset('EL',  data = EL)
     os.chdir(work_dir)
+else:
+    print('yet')
 
 start_angle = 0 # first azimuth angle
 delta_phi = 30 # when sweeping azimuth angles, phi increments by this number each iteration
@@ -62,13 +66,11 @@ for i in range(N_angles):
     if beam_file[-4:] == '.out':
         freq_array_X, AZ_beam, EL_beam, Et_shifted, Ep_shifted, gain_shifted = gen.read_beam_FEKO(beam_file, azimuth)
     elif beam_file[-4:] == '.ra1':
-        freq_array_X, AZ_beam, EL_beam, Et_shifted, Ep_shifted, gain_shifted = gen.read_beam_WIPLD(beam_file, azimuth)   
+        freq_array_X, AZ_beam, EL_beam, gain_shifted = gen.read_beam_WIPLD(beam_file, azimuth)   
     freq_array_X /= 1e6 # convert to MHz
 
     lst_az_el_file = save_folder+'/save_file_hdf5'
     print(freq_array_X.shape)
-    print(AZ_beam.shape)
-    print(gain_shifted.shape)
     # Beam
     beam_all_X = np.copy(gain_shifted)
     FLOW         = 40 
@@ -83,6 +85,7 @@ for i in range(N_angles):
     print('Local coords')
     # Local Coordinates
     LST, AZ_lst, EL_lst = gen.read_hdf5_LST_AZ_EL(lst_az_el_file)
+    print(LST.shape)
     print('Convolution')
 #   lst_out, freq_out, ant_temp_out = ast.parallel_convolution(LST, freq_array, AZ_beam, EL_beam, beam_all, AZ_lst, EL_lst, sky_model, 40, normalization='yes', normalization_solid_angle_above_horizon_freq=1)
     lst_out, freq_out, conv_out, ant_temp_out = ast.parallel_convolution(LST, freq_array, AZ_beam, EL_beam, beam_all, AZ_lst, EL_lst, sky_model, 40, normalization='yes', normalization_solid_angle_above_horizon_freq=1)
