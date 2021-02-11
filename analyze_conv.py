@@ -5,6 +5,25 @@ import os
 import general as gen
 import matplotlib.pyplot as plt
 
+def plot_beam(beam_name, antenna_orientation, phi):
+    if beam_name[-3:] == 'out': # FEKO file
+        r = gen.read_beam_FEKO(beam_name, antenna_orientation)
+    elif beam_name[-3:] == 'ra1': # WIPLD
+        r = gen.read_beam_WIPLD(beam_name, antenna_orientation)
+    f = r[0]/1e6 # convert to MHz
+    gain = r[-1]
+    print(gain.shape)
+    if gain.shape[-1] == 361:
+        gain = gain[:, :, :-1] # cut last angle since 0 = 360 degrees
+    print('Min frequency = {}'.format(f.min()))
+    print('Max frequency = {}'.format(f.max()))
+    print('Frequency shape = {}'.format(f.shape))
+    plt.figure()
+    #plt.imshow(gain[:, phi, 0:90], aspect='auto', extent=[0, 90, f.max(), f.min()])
+    plt.imshow(gain[:, :, phi], aspect='auto', extent=[0, 90, f.max(), f.min()])
+    plt.colorbar()
+#    plt.draw()
+    plt.show()
 
 def new_read_hdf5(azimuth, varname, loc='mars'):
     ## NOT UPDATED
@@ -206,7 +225,7 @@ def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_p
             gpath = 'inf_metal_ground_plane/'
         else:
             gpath = 'no_ground_plane/'
-        plt.savefig('plots/' + gpath + loc +'/rms_plots/rms_comparison'+str(azimuth))
+        plt.savefig('plots/' + gpath + loc +'/rms_plots/rms_comparison')
     plt.show()
 
 def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, loc='mars', ground_plane=True, save=False):

@@ -10,7 +10,7 @@ galactic_coord_file = 'no_git_files/pixel_coords_map_ring_galactic_res9.fits'
 parent_save = 'no_git_files/'
 antenna = 'bd'
 ground_plane = True
-loc = 'mars'
+loc = 'edges'
 if antenna == 'bd':
     fs = 'blade_dipole'
     if ground_plane:
@@ -46,7 +46,7 @@ if not os.path.exists(save_folder) or not 'save_file_hdf5' in os.listdir(save_fo
 else:
     print('yet')
 
-start_angle = 60 # first azimuth angle
+start_angle = 0 # first azimuth angle
 delta_phi = 30 # when sweeping azimuth angles, phi increments by this number each iteration
 N_angles = int((180 - start_angle)/delta_phi)
 # master_lst = []
