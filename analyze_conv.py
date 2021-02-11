@@ -52,9 +52,12 @@ def read_hdf5(azimuth, varname, loc, ground_plane=True):
 
 def get_ftl(azimuth, loc='mars', ground_plane=True, new=False, return_fl=True, return_t=True):
     if not new:
-        f = read_hdf5(azimuth, 'freq_out', loc=loc, ground_plane=ground_plane)
+        fm = read_hdf5(azimuth, 'freq_out', loc=loc, ground_plane=ground_plane)
         t = read_hdf5(azimuth, 'ant_temp_out', loc=loc, ground_plane=ground_plane)
-        lst = read_hdf5(azimuth, 'LST_out', loc=loc, ground_plane=ground_plane)
+        l = read_hdf5(azimuth, 'LST_out', loc=loc, ground_plane=ground_plane)
+        ### hand wave, fix this CHB feb 11
+        f = np.linspace(fm, fm+80, 81)
+        lst = np.linspace(l, l*240, 241)
     else: ## not up to date
         f = new_read_hdf5(azimuth, 'freq_out', loc)
         t = new_read_hdf5(azimuth, 'ant_temp_out', loc)
