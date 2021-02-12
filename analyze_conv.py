@@ -46,18 +46,16 @@ def read_hdf5(azimuth, varname, loc, ground_plane=True):
         var=hf.get(varname)
         var_arr = np.array(var)
     if loc == 'edges':
-        return var_arr[0]
+ #       return var_arr[0]
+        return var_arr
     else:
        return var_arr
 
 def get_ftl(azimuth, loc='mars', ground_plane=True, new=False, return_fl=True, return_t=True):
     if not new:
-        fm = read_hdf5(azimuth, 'freq_out', loc=loc, ground_plane=ground_plane)
+        f = read_hdf5(azimuth, 'freq_out', loc=loc, ground_plane=ground_plane)
         t = read_hdf5(azimuth, 'ant_temp_out', loc=loc, ground_plane=ground_plane)
-        l = read_hdf5(azimuth, 'LST_out', loc=loc, ground_plane=ground_plane)
-        ### hand wave, fix this CHB feb 11
-        f = np.linspace(fm, fm+80, 81)
-        lst = np.linspace(l, l*240, 241)
+        lst = read_hdf5(azimuth, 'LST_out', loc=loc, ground_plane=ground_plane)
     else: ## not up to date
         f = new_read_hdf5(azimuth, 'freq_out', loc)
         t = new_read_hdf5(azimuth, 'ant_temp_out', loc)
