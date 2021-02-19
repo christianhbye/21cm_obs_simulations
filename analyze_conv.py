@@ -316,7 +316,7 @@ def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, l
         plt.savefig('plots/' + gpath + loc + '/residuals_' + str(azimuth))
     plt.show()
 
-def save_all_plots(loc='edges', ground_plane=True, simulation='edges_hb'):
+def save_all_plots(loc='mars', ground_plane=True, simulation='edges_hb'):
 #    azimuths = [0, 30, 60, 90, 120, 150]
     azimuths = [0, 90]
     print('temp3d and rms')

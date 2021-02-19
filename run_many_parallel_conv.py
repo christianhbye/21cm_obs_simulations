@@ -11,20 +11,22 @@ parent_save = 'no_git_files/'
 antenna = 'bd'
 ground_plane = True
 loc = 'mars'
-# antenna = 'EDGES_highband'
-lowband = True
+simulation = 'EDGES_highband'
+lowband = False
+if simulation == 'EDGES_highband':
+    beam_file = 'no_git_files/EDGES_blade_high_band_infinite.out'
+## elif:
+
 if antenna == 'bd':
     fs = 'blade_dipole'
     if ground_plane:
-        ss = 'inf_metal_ground_plane/FEKO_simulation'
-        beam_file = 'no_git_files/blade_dipole_PEC.out'
+        s1 = 'inf_metal_ground_plane/'
+        s2 = simulation + '/'
+        ss = s1 + s2
     else:
         ss = 'no_ground_plane'
-        beam_file = 'no_git_files/blade_dipole.out'
     path = fs + '/' + ss + '/' + loc
-elif antenna == 'EDGES_highband':
-    path = 'EDGES_highband'
-    beam_file = 'no_git_files/EDGES_blade_high_band_infinite.out'
+
 save_folder = parent_save + 'sky_models/' + path 
 print(save_folder)
 
@@ -52,7 +54,7 @@ else:
     print('yet')
 
 start_angle = 0 # first azimuth angle
-delta_phi = 30 # when sweeping azimuth angles, phi increments by this number each iteration
+delta_phi = 90 # when sweeping azimuth angles, phi increments by this number each iteration
 N_angles = int((180 - start_angle)/delta_phi)
 # master_lst = []
 # master_freq = []
