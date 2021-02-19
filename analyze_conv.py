@@ -5,14 +5,17 @@ import os
 import general as gen
 import matplotlib.pyplot as plt
 
-def plot_beam(beam_name, antenna_orientation, phi):
-    if beam_name[-3:] == 'out': # FEKO file
-        r = gen.read_beam_FEKO(beam_name, antenna_orientation)
-    elif beam_name[-3:] == 'ra1': # WIPLD
-        r = gen.read_beam_WIPLD(beam_name, antenna_orientation)
-    f = r[0]/1e6 # convert to MHz
-    gain = r[-1]
-    print(gain.shape)
+def plot_beam(beam_name, antenna_orientation, phi, gain_in=None, frequency_in=None):
+    if gain_in.any() and frequency_in.any():
+        gain = gain_in
+        f = frequency_in
+    else:
+        if beam_name[-3:] == 'out': # FEKO file
+            r = gen.read_beam_FEKO(beam_name, antenna_orientation)
+        elif beam_name[-3:] == 'ra1': # WIPLD
+            r = gen.read_beam_WIPLD(beam_name, antenna_orientation)
+        f = r[0]/1e6 # convert to MHz
+        gain = r[-1]
     if gain.shape[-1] == 361:
         gain = gain[:, :, :-1] # cut last angle since 0 = 360 degrees
     print('Min frequency = {}'.format(f.min()))
@@ -23,7 +26,18 @@ def plot_beam(beam_name, antenna_orientation, phi):
     plt.imshow(gain[:, :, phi], aspect='auto', extent=[0, 90, f.max(), f.min()])
     plt.colorbar()
 #    plt.draw()
-    plt.show()
+    plt.title(r'Gain ($\phi = {}$)'.format(phi) +'\n' + beam_name)
+ #   plt.draw()
+    plt.figure()
+    dG = gain[1:, :, phi] - gain[:-1, :, phi]
+    diff = f[1:] - f[:-1]
+    assert diff.all() == f[1] - f[0], 'not constant frequency spacing'
+    df = f[1] - f[0]
+    derivative = dG/df
+    plt.figure()
+    plt.imshow(derivative, aspect='auto', extent=[0, 90, f.max(), f.min()])
+    plt.colorbar()
+    plt.title('Derivative, phi = %d \n' %(phi) + beam_name)
 
 def new_read_hdf5(azimuth, varname, loc='mars'):
     ## NOT UPDATED
@@ -35,9 +49,16 @@ def new_read_hdf5(azimuth, varname, loc='mars'):
     idx = azimuth/180
     return var_arr[idx]
 
-def read_hdf5(azimuth, varname, loc, ground_plane=True):
+def read_hdf5(azimuth, varname, loc, ground_plane=True, simulation='edges_hb'):
     if ground_plane:
-        gpath = 'inf_metal_ground_plane/'
+        g1 = 'inf_metal_ground_plane/'
+        if simulation == 'edges_hb':
+            g2 = 'EDGES_highband/'
+        elif simulation == 'edges_lb':
+            g2 = 'EDGES_lowband/'
+        elif simulation == 'FEKO':
+            g2 = 'FEKO_simulation' 
+        gpath = g1 + g2
     else:
         gpath = 'no_ground_plane/'
     path = 'no_git_files/sky_models/blade_dipole/' + gpath + loc + '/save_parallel_convolution_' + str(azimuth)
@@ -51,11 +72,11 @@ def read_hdf5(azimuth, varname, loc, ground_plane=True):
     else:
        return var_arr
 
-def get_ftl(azimuth, loc='mars', ground_plane=True, new=False, return_fl=True, return_t=True):
+def get_ftl(azimuth, loc='mars', ground_plane=True, simulation='edges_hb', new=False, return_fl=True, return_t=True):
     if not new:
-        f = read_hdf5(azimuth, 'freq_out', loc=loc, ground_plane=ground_plane)
-        t = read_hdf5(azimuth, 'ant_temp_out', loc=loc, ground_plane=ground_plane)
-        lst = read_hdf5(azimuth, 'LST_out', loc=loc, ground_plane=ground_plane)
+        f = read_hdf5(azimuth, 'freq_out', loc=loc, ground_plane=ground_plane, simulation=simulation)
+        t = read_hdf5(azimuth, 'ant_temp_out', loc=loc, ground_plane=ground_plane, simulation=simulation)
+        lst = read_hdf5(azimuth, 'LST_out', loc=loc, ground_plane=ground_plane, simulation=simulation)
     else: ## not up to date
         f = new_read_hdf5(azimuth, 'freq_out', loc)
         t = new_read_hdf5(azimuth, 'ant_temp_out', loc)
@@ -88,8 +109,8 @@ def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, save=False, l
     else:
         plt.show()
 
-def plot_temp_3d(azimuth, save=False, loc='mars', ground_plane=True):
-    freq_vector, temp_array, LST_vector = get_ftl(azimuth, loc=loc, ground_plane=ground_plane)   
+def plot_temp_3d(azimuth, save=False, loc='mars', ground_plane=True, simulation='edges_hb'):
+    freq_vector, temp_array, LST_vector = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation)   
     plt.figure()
     freq_min = freq_vector[0]
     freq_max = freq_vector[-1]
@@ -106,10 +127,17 @@ def plot_temp_3d(azimuth, save=False, loc='mars', ground_plane=True):
     plt.ylabel('LST')
     plt.xlabel('Frequency [MHz]')
     cbar = plt.colorbar()
-    cbar.set_label("Antenna Teperature [K]")
+    cbar.set_label("Antenna Temperature [K]")
     if save:
         if ground_plane:
-            gpath = 'inf_metal_ground_plane/'
+            g1 = 'inf_metal_ground_plane/'
+            if simulation == 'edges_hb':
+                g2 = 'EDGES_highband/'
+            elif simulation == 'edges_lb':
+                g2 = 'EDGES_lowband/'
+            elif simulation == 'FEKO':
+                g2 = 'FEKO_simulation' 
+            gpath = g1 + g2
         else:
             gpath = 'no_ground_plane/'
         path = 'plots/' + gpath + loc + '/temp3d_plots'
@@ -121,13 +149,13 @@ def plot_temp_3d(azimuth, save=False, loc='mars', ground_plane=True):
     else:
         plt.draw()
 
-def plot_waterfalls_diff(azimuths=[0, 30, 60, 90, 120, 150], ref_azimuth=0, loc='mars', ground_plane=True, save=False):
-    f0, t0, l0 = get_ftl(ref_azimuth, loc=loc, ground_plane=ground_plane)
+def plot_waterfalls_diff(azimuths=[0, 30, 60, 90, 120, 150], ref_azimuth=0, loc='mars', ground_plane=True, simulation='edges_hb', save=False):
+    f0, t0, l0 = get_ftl(ref_azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation)
     for phi in azimuths:
         if phi == ref_azimuth:
-            plot_temp_3d(phi, save=save, loc=loc, ground_plane=ground_plane)
+            plot_temp_3d(phi, save=save, loc=loc, ground_plane=ground_plane, simulation=simulation)
         else:
-            f, t, l = get_ftl(phi, loc=loc, ground_plane=ground_plane)
+            f, t, l = get_ftl(phi, loc=loc, ground_plane=ground_plane, simulation=simulation)
             dt = t - t0
             assert f.all() == f0.all() and l.all() == l0.all(), "incompatible frequency/lst"
             plt.figure()
@@ -143,7 +171,14 @@ def plot_waterfalls_diff(azimuths=[0, 30, 60, 90, 120, 150], ref_azimuth=0, loc=
             cbar.set_label(r"$T(\phi=%d) - T(\phi=%d)$ [K]" % (phi, ref_azimuth))
             if save:
                 if ground_plane:
-                    gpath = 'inf_metal_ground_plane/'
+                    g1 = 'inf_metal_ground_plane/'
+                    if simulation == 'edges_hb':
+                        g2 = 'EDGES_highband/'
+                    elif simulation == 'edges_lb':
+                        g2 = 'EDGES_lowband/'
+                    elif simulation == 'FEKO':
+                        g2 = 'FEKO_simulation' 
+                    gpath = g1 + g2
                 else:
                     gpath = 'no_ground_plane/'
                 plt.savefig('plots/' + gpath + loc + '/diff_plots/' + 'temp_'+str(phi)+'-'+str(ref_azimuth))
@@ -174,8 +209,11 @@ def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_norma
 
     return rms_values, residuals
 
-def plot_rms(phi, flow=50, fhigh=100, Nfg_split=3, save=False, loc='mars', ground_plane=True, frequency_normalization=100, noise_normalization=0.1, noise=False):
-    f, t, lst = get_ftl(phi, loc=loc, ground_plane=ground_plane)
+def plot_rms(phi, flow=50, fhigh=100, Nfg_split=3, save=False, loc='mars', ground_plane=True, simulation='edges_hb', frequency_normalization=100, noise_normalization=0.1, noise=False):
+    f, t, lst = get_ftl(phi, loc=loc, ground_plane=ground_plane, simulation=simulation)
+    if f[0] >= 100: ## highband
+        flow = 100
+        fhigh = 200
     rms_values = compute_rms(f, t, flow=flow, fhigh=fhigh, frequency_normalization=frequency_normalization, noise_normalization=noise_normalization, noise=noise)[0]
     plt.figure()
     plt.plot(lst, rms_values[:, :Nfg_split]) # 3 parameters
@@ -200,19 +238,29 @@ def plot_rms(phi, flow=50, fhigh=100, Nfg_split=3, save=False, loc='mars', groun
     l2._legend_box.align = 'left'
     if save:
         if ground_plane:
-            gpath = 'inf_metal_ground_plane/'
+            g1 = 'inf_metal_ground_plane/'
+            if simulation == 'edges_hb':
+                g2 = 'EDGES_highband/'
+            elif simulation == 'edges_lb':
+                g2 = 'EDGES_lowband/'
+            elif simulation == 'FEKO':
+                g2 = 'FEKO_simulation' 
+            gpath = g1 + g2
         else:
             gpath = 'no_ground_plane/'
         plt.savefig('plots/' + gpath + loc +'/rms_plots/rms'+str(phi))
     plt.show()
 
-def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_plane=True, flow=50, fhigh=100, Nfg=5, save=False):
-    f, l = get_ftl(0, loc=loc, ground_plane=ground_plane, return_t=False)
+def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_plane=True, simulation='edges_hb', flow=50, fhigh=100, Nfg=5, save=False):
+    f, l = get_ftl(0, loc=loc, ground_plane=ground_plane, simulation=simulation, return_t=False)
+    if f[0] >= 100: ## high band
+        flow = 100
+        fhigh = 200
     print(f.shape)
     print(l.shape)
     plt.figure()
     for i, azimuth in enumerate(azimuths):
-        t = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, return_fl=False)
+        t = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation, return_fl=False)
         print(t.shape)
         rms = compute_rms(f, t, flow, fhigh, Nfg_array = [Nfg])[0]
         plt.plot(l, rms, label=r'$\phi$ = {}'.format(azimuth))
@@ -223,15 +271,25 @@ def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_p
     plt.xlim(np.min(l)-0.5, np.max(l)+0.5)
     if save:
         if ground_plane:
-            gpath = 'inf_metal_ground_plane/'
+            g1 = 'inf_metal_ground_plane/'
+            if simulation == 'edges_hb':
+                g2 = 'EDGES_highband/'
+            elif simulation == 'edges_lb':
+                g2 = 'EDGES_lowband/'
+            elif simulation == 'FEKO':
+                g2 = 'FEKO_simulation' 
+            gpath = g1 + g2
         else:
             gpath = 'no_ground_plane/'
         plt.savefig('plots/' + gpath + loc +'/rms_plots/rms_comparison')
     plt.show()
 
-def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, loc='mars', ground_plane=True, save=False):
+def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, loc='mars', ground_plane=True, simulation='edges_hb', save=False):
     # plots for five-term fit
-    f, t, l = get_ftl(azimuth, loc=loc, ground_plane=ground_plane)
+    f, t, l = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation)
+    if f[0] >= 100:
+        flow = 100
+        fhigh = 200
     res = compute_rms(f, t, flow=flow, fhigh=fhigh, Nfg_array=[5])[1]
     f = f[(f >= flow) & (f <= fhigh)]
     plt.figure()
@@ -245,21 +303,29 @@ def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, l
     plt.legend()
     if save:
         if ground_plane:
-            gpath = 'inf_metal_ground_plane/'
+            g1 = 'inf_metal_ground_plane/'
+            if simulation == 'edges_hb':
+                g2 = 'EDGES_highband/'
+            elif simulation == 'edges_lb':
+                g2 = 'EDGES_lowband/'
+            elif simulation == 'FEKO':
+                g2 = 'FEKO_simulation' 
+            gpath = g1 + g2
         else:
             gpath = 'no_ground_plane/'
         plt.savefig('plots/' + gpath + loc + '/residuals_' + str(azimuth))
     plt.show()
 
-def save_all_plots(loc='mars', ground_plane=True):
-    azimuths = [0, 30, 60, 90, 120, 150]
+def save_all_plots(loc='edges', ground_plane=True, simulation='edges_hb'):
+#    azimuths = [0, 30, 60, 90, 120, 150]
+    azimuths = [0, 90]
     print('temp3d and rms')
     for phi in azimuths:
-        plot_temp_3d(phi, loc=loc, ground_plane=ground_plane, save=True)
-        plot_rms(phi, loc=loc, ground_plane=ground_plane, save=True)
+        plot_temp_3d(phi, loc=loc, ground_plane=ground_plane, save=True, simulation=simulation)
+        plot_rms(phi, loc=loc, ground_plane=ground_plane, save=True, simulation=simulation)
     print('waterfalls_diff')
-    plot_waterfalls_diff(loc=loc, ground_plane=ground_plane, save=True)
+    plot_waterfalls_diff(azimuths=azimuths, loc=loc, ground_plane=ground_plane, save=True, simulation=simulation)
     print('rms comparison')
-    plot_rms_comparison(loc=loc, ground_plane=ground_plane, save=True)
+    plot_rms_comparison(azimuths=azimuths, loc=loc, ground_plane=ground_plane, save=True, simulation=simulation)
     print('residuals')
-    plot_residuals(loc=loc, ground_plane=ground_plane, save=True)
+    plot_residuals(loc=loc, ground_plane=ground_plane, save=True, simulation=simulation)

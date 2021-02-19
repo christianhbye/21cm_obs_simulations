@@ -10,17 +10,22 @@ galactic_coord_file = 'no_git_files/pixel_coords_map_ring_galactic_res9.fits'
 parent_save = 'no_git_files/'
 antenna = 'bd'
 ground_plane = True
-loc = 'edges'
+loc = 'mars'
+# antenna = 'EDGES_highband'
+lowband = True
 if antenna == 'bd':
     fs = 'blade_dipole'
     if ground_plane:
-        ss = 'inf_metal_ground_plane'
-        beam_file = 'no_git_files/blade_dipole_infinite_ground_plane.ra1'
+        ss = 'inf_metal_ground_plane/FEKO_simulation'
+        beam_file = 'no_git_files/blade_dipole_PEC.out'
     else:
         ss = 'no_ground_plane'
         beam_file = 'no_git_files/blade_dipole.out'
-    path = fs + '/' + ss
-save_folder = parent_save + 'sky_models/' + path + '/' + loc 
+    path = fs + '/' + ss + '/' + loc
+elif antenna == 'EDGES_highband':
+    path = 'EDGES_highband'
+    beam_file = 'no_git_files/EDGES_blade_high_band_infinite.out'
+save_folder = parent_save + 'sky_models/' + path 
 print(save_folder)
 
 work_dir = '$SCRATCH/21cm_obs_simulations'
@@ -65,19 +70,26 @@ for i in range(N_angles):
     print('azimuth = {}'.format(azimuth))
     if beam_file[-4:] == '.out':
         freq_array_X, AZ_beam, EL_beam, Et_shifted, Ep_shifted, gain_shifted = gen.read_beam_FEKO(beam_file, azimuth)
-        freq_array_X /= 1e6 # convert to MHz
+        if freq_array_X[0] > 1e6: # the unit is likely Hz
+            freq_array_X /= 1e6 # convert to MHz
     elif beam_file[-4:] == '.ra1':
         freq_array_X, AZ_beam, EL_beam, gain_shifted = gen.read_beam_WIPLD(beam_file, azimuth)   
     lst_az_el_file = save_folder+'/save_file_hdf5'
     # Beam
     beam_all_X = np.copy(gain_shifted)
-    FLOW         = 40 
-    FHIGH        = 120
+    if lowband:
+        FLOW         = 40 
+        FHIGH        = 120
+    else:
+        FLOW = 100
+        FHIGH = 200
     freq_array   = freq_array_X[(freq_array_X >= FLOW) & (freq_array_X <= FHIGH)]
     print('freq array len')
     print(len(freq_array))
-    beam_all     = beam_all_X[(freq_array_X >= FLOW) & (freq_array_X <= FHIGH), :, 0:-1] # cut out last col because 0 = 360
-    AZ_beam = AZ_beam[0:-1] # cut out last column, same as for beam_all
+    beam_all = beam_all_X[(freq_array_X >= FLOW) & (freq_array_X <= FHIGH), :, :]
+    if beam_all.shape[-1] == 361:
+        beam_all     = beam_all[:, :, 0:-1] # cut out last col because 0 = 360
+        AZ_beam = AZ_beam[0:-1] # cut out last column, same as for beam_all
     print('Sky model')
     # Sky model
     map_freq = 408
@@ -99,7 +111,7 @@ for i in range(N_angles):
 # master_conv = np.array(master_conv)
 # master_ant_temp = np.array(master_ant_temp)
 
-    with h5py.File(save_folder+'/save_parallel_convolution_MARS_'+str(azimuth), 'w') as hf:
+    with h5py.File(save_folder+'/save_parallel_convolution_'+str(azimuth), 'w') as hf:
         hf.create_dataset('LST_out', data = lst_out)
         hf.create_dataset('freq_out',  data = freq_out)
         hf.create_dataset('conv_out',  data = conv_out)
