@@ -1,4 +1,3 @@
-
 import h5py
 import numpy as np
 import os
@@ -187,7 +186,7 @@ def plot_waterfalls_diff(azimuths=[0, 30, 60, 90, 120, 150], ref_azimuth=0, loc=
     if not save:
         plt.show()
 
-def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_normalization=100, noise_normalization=0.1, noise=False):
+def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='LINLOG'):
     frequency_vector = f[(f >= flow) & (f <= fhigh)]
     temp_array = t[:, (f>=flow) & (f<=fhigh)]
     rms_values = np.empty((len(temp_array), len(Nfg_array)))
@@ -199,8 +198,8 @@ def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_norma
                 standard_deviation_vector = np.ones(len(frequency_vector)) # no noise
             else:
                 standard_deviation_vector = noise_normalization * temperature_vector/temperature_vector[frequency_vector == frequency_normalization]
-            p = gen.fit_polynomial_fourier('LINLOG', frequency_vector/frequency_normalization, temperature_vector, int(Nfg), Weights=1/(standard_deviation_vector**2))
-            m = gen.model_evaluate('LINLOG', p[0], frequency_vector/frequency_normalization)
+            p = gen.fit_polynomial_fourier(model_type, frequency_vector/frequency_normalization, temperature_vector, int(Nfg), Weights=1/(standard_deviation_vector**2))
+            m = gen.model_evaluate(model_type, p[0], frequency_vector/frequency_normalization)
             r = temperature_vector - m
             residuals[j, i, :] = r
             # compute rms of residuals
@@ -209,12 +208,12 @@ def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_norma
 
     return rms_values, residuals
 
-def plot_rms(phi, flow=50, fhigh=100, Nfg_split=3, save=False, loc='mars', ground_plane=True, simulation='edges_hb', frequency_normalization=100, noise_normalization=0.1, noise=False):
+def plot_rms(phi, flow=50, fhigh=100, Nfg_split=3, save=False, loc='mars', ground_plane=True, simulation='edges_hb', frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='LINLOG'):
     f, t, lst = get_ftl(phi, loc=loc, ground_plane=ground_plane, simulation=simulation)
     if f[0] >= 100: ## highband
         flow = 100
-        fhigh = 200
-    rms_values = compute_rms(f, t, flow=flow, fhigh=fhigh, frequency_normalization=frequency_normalization, noise_normalization=noise_normalization, noise=noise)[0]
+        fhigh = 190
+    rms_values = compute_rms(f, t, flow=flow, fhigh=fhigh, frequency_normalization=frequency_normalization, noise_normalization=noise_normalization, noise=noise, model_type=model_type)[0]
     plt.figure()
     plt.plot(lst, rms_values[:, :Nfg_split]) # 3 parameters
     leg_v = np.arange(Nfg_split)
@@ -251,18 +250,18 @@ def plot_rms(phi, flow=50, fhigh=100, Nfg_split=3, save=False, loc='mars', groun
         plt.savefig('plots/' + gpath + loc +'/rms_plots/rms'+str(phi))
     plt.show()
 
-def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_plane=True, simulation='edges_hb', flow=50, fhigh=100, Nfg=5, save=False):
+def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_plane=True, simulation='edges_hb', flow=50, fhigh=100, model_type='LINLOG', Nfg=5, save=False):
     f, l = get_ftl(0, loc=loc, ground_plane=ground_plane, simulation=simulation, return_t=False)
     if f[0] >= 100: ## high band
         flow = 100
-        fhigh = 200
+        fhigh = 190
     print(f.shape)
     print(l.shape)
     plt.figure()
     for i, azimuth in enumerate(azimuths):
         t = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation, return_fl=False)
         print(t.shape)
-        rms = compute_rms(f, t, flow, fhigh, Nfg_array = [Nfg])[0]
+        rms = compute_rms(f, t, flow, fhigh, Nfg_array = [Nfg], model_type=model_type)[0]
         plt.plot(l, rms, label=r'$\phi$ = {}'.format(azimuth))
     plt.legend()
     plt.xlabel('LST (hours)')
@@ -284,13 +283,13 @@ def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_p
         plt.savefig('plots/' + gpath + loc +'/rms_plots/rms_comparison')
     plt.show()
 
-def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, loc='mars', ground_plane=True, simulation='edges_hb', save=False):
+def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, loc='mars', ground_plane=True, simulation='edges_hb', model_type='LINLOG', save=False):
     # plots for five-term fit
     f, t, l = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation)
     if f[0] >= 100:
         flow = 100
-        fhigh = 200
-    res = compute_rms(f, t, flow=flow, fhigh=fhigh, Nfg_array=[5])[1]
+        fhigh = 190
+    res = compute_rms(f, t, flow=flow, fhigh=fhigh, Nfg_array=[5], model_type=model_type)[1]
     f = f[(f >= flow) & (f <= fhigh)]
     plt.figure()
     for lst in lst_for_plot:
