@@ -1,4 +1,5 @@
 import h5py
+import itertools
 import numpy as np
 import os
 import general as gen
@@ -336,6 +337,30 @@ def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, N
             gpath = 'no_ground_plane/'
         plt.savefig('plots/' + gpath + loc + '/residuals_' + str(azimuth))
     plt.show()
+
+
+def get_best_LST_combination(loc, ground_plane, simulation, azimuth=0, model_type='LINLOG', Nfg=[5], flow=50, fhigh=100):
+    f, t, l = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation)
+    rms_min = 1e6 # just some really large number that makes the first rms less than this
+    lstc_min = []
+    res_min = []
+    for i in range(1, len(l)+1): ## loop through all possible lengths
+        print(i)
+        combinations = itertools.combinations(l, i)
+        for lstc in combinations: ## single combination of lst hrs
+            indices = []
+            for lstci in lstc:
+                indices.append(np.argwhere(l == lstci)[0])
+            t2 = t[indices, :]
+            t_avg = np.mean(t2, axis=0)
+            rms, res = compute_rms(f, t_avg, flow=flow, fhigh=fhigh, Nfg_array=Nfg, model_type=model_type)
+            if rms < rms_min:
+                rms_min = rms
+                res_min = res
+                lstc_min = lstc
+    return lstc_min, res_min, rms_min
+
+
 
 
 def save_all_plots(loc='mars', ground_plane=True, simulation='edges_hb'):
