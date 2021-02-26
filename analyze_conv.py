@@ -188,7 +188,11 @@ def plot_waterfalls_diff(azimuths=[0, 30, 60, 90, 120, 150], ref_azimuth=0, loc=
 
 def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='LINLOG'):
     frequency_vector = f[(f >= flow) & (f <= fhigh)]
-    temp_array = t[:, (f>=flow) & (f<=fhigh)]
+    if len(t.shape) == 2:
+        temp_array = t[:, (f>=flow) & (f<=fhigh)]
+    else:
+        temp_array = t[(f>=flow) & (f<=fhigh)]
+        temp_array = np.expand_dims(temp_array, axis=0)
     rms_values = np.empty((len(temp_array), len(Nfg_array)))
     residuals = np.empty((len(Nfg_array), len(temp_array[:, 0]), len(temp_array[0, :])))
     for j, Nfg in enumerate(Nfg_array):
@@ -208,33 +212,32 @@ def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_norma
 
     return rms_values, residuals
 
-def plot_rms(phi, flow=50, fhigh=100, Nfg_split=3, save=False, loc='mars', ground_plane=True, simulation='edges_hb', frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='LINLOG'):
-    f, t, lst = get_ftl(phi, loc=loc, ground_plane=ground_plane, simulation=simulation)
-    if f[0] >= 100: ## highband
-        flow = 100
-        fhigh = 190
+def plot_rms(psi, f=None, t=None, lst=None, flow=50, fhigh=100, Nfg_array=[1, 2, 3, 4, 5, 6], Nfg_split=3, save=False, loc='mars', ground_plane=True, simulation='edges_hb', frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='LINLOG'):
+    if type(psi) == int:
+        f, t, lst = get_ftl(psi, loc=loc, ground_plane=ground_plane, simulation=simulation)
     rms_values = compute_rms(f, t, flow=flow, fhigh=fhigh, frequency_normalization=frequency_normalization, noise_normalization=noise_normalization, noise=noise, model_type=model_type)[0]
     plt.figure()
     plt.plot(lst, rms_values[:, :Nfg_split]) # 3 parameters
-    leg_v = np.arange(Nfg_split)
-    leg = [str(n+1) for n in leg_v]
+    leg_v = Nfg_array[:Nfg_split]
+    leg = [str(n) for n in leg_v]
     l1 = plt.legend(leg, title='Number of parameters:')
     l1._legend_box.align = 'left'
-    plt.title(r'RMS (${} \leq \nu \leq {}$) vs LST at $\phi = {}$'.format(flow, fhigh, phi))
+    plt.title(r'RMS (${} \leq \nu \leq {}$) vs LST at $\psi = {}$'.format(flow, fhigh, psi))
     plt.xlabel('LST (hours)')
     plt.ylabel('RMS (Kelvin)')
     plt.xlim(np.min(lst)-.5, np.max(lst)+.5)
     plt.show()
-    plt.figure()
-    plt.title(r'RMS (${} \leq \nu \leq {}$) vs LST at $\phi = {}$'.format(flow, fhigh, phi))
-    plt.xlabel('LST (hours)')
-    plt.ylabel('RMS (Kelvin)')
-    plt.xlim(np.min(lst)-.5, np.max(lst)+.5)
-    plt.plot(lst, rms_values[:, Nfg_split:])
-    leg_v = np.arange(Nfg_split, rms_values.shape[-1])
-    leg = [str(n+1) for n in leg_v]
-    l2 = plt.legend(leg, title='Number of parameters:')
-    l2._legend_box.align = 'left'
+    if Nfg_split > len(Nfg_array):
+        plt.figure()
+        plt.title(r'RMS (${} \leq \nu \leq {}$) vs LST at $\psi = {}$'.format(flow, fhigh, psi))
+        plt.xlabel('LST (hours)')
+        plt.ylabel('RMS (Kelvin)')
+        plt.xlim(np.min(lst)-.5, np.max(lst)+.5)
+        plt.plot(lst, rms_values[:, Nfg_split:])
+        leg_v = Nfg_array[:Nfg_split]
+        leg = [str(n) for n in leg_v]
+        l2 = plt.legend(leg, title='Number of parameters:')
+        l2._legend_box.align = 'left'
     if save:
         if ground_plane:
             g1 = 'inf_metal_ground_plane/'
@@ -248,7 +251,9 @@ def plot_rms(phi, flow=50, fhigh=100, Nfg_split=3, save=False, loc='mars', groun
         else:
             gpath = 'no_ground_plane/'
         plt.savefig('plots/' + gpath + loc +'/rms_plots/rms'+str(phi))
-    plt.show()
+    if Nfg_split > len(Nfg_array):
+        plt.show()
+
 
 def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_plane=True, simulation='edges_hb', flow=50, fhigh=100, model_type='LINLOG', Nfg=5, save=False):
     f, l = get_ftl(0, loc=loc, ground_plane=ground_plane, simulation=simulation, return_t=False)
@@ -283,21 +288,29 @@ def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_p
         plt.savefig('plots/' + gpath + loc +'/rms_plots/rms_comparison')
     plt.show()
 
-def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, loc='mars', ground_plane=True, simulation='edges_hb', model_type='LINLOG', save=False):
-    # plots for five-term fit
+def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, Nfg_array=[5, 6], loc='mars', ground_plane=True, simulation='edges_hb', model_type='LINLOG', avg=False, save=False):
+    # plots for five-term fit and six-term fit
     f, t, l = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation)
-    if f[0] >= 100:
-        flow = 100
-        fhigh = 190
-    res = compute_rms(f, t, flow=flow, fhigh=fhigh, Nfg_array=[5], model_type=model_type)[1]
+    if avg:
+        t = np.mean(t, axis=0)
+    rms, res = compute_rms(f, t, flow=flow, fhigh=fhigh, Nfg_array=Nfg_array, model_type=model_type)
+    print(rms.shape)
+    print(res.shape)
     f = f[(f >= flow) & (f <= fhigh)]
     plt.figure()
-    for lst in lst_for_plot:
-        lst_point = 10 * lst # since resolution is .1 hours
-        plt.plot(f, res[0, lst_point, :], label='LST = {} hrs'.format(lst))
+    if not avg:
+        for lst in lst_for_plot:
+            lst_point = 10 * lst # since resolution is .1 hours
+            plt.plot(f, res[0, lst_point, :], label='LST = {} hrs'.format(lst))
+    else:
+        s1 = 'RMS\n'
+        for i, n in enumerate(Nfg_array):
+            plt.plot(f, res[i, 0, :], label=str(n))
+            s1 += str(n) + ' parameters: {:.3g} \n'.format(rms[0, i])
+        plt.text(x=f.max()-0.5*(f.max()-f.min()), y=res[0, :, :].min(), s=s1, bbox=dict(facecolor='wheat'))
     plt.xlabel(r'$\nu$ [MHz]')
     plt.ylabel('T [K]')
-    title_str = r'Residuals vs Frequency for $\phi={}$'.format(azimuth)
+    title_str = r'Residuals vs Frequency for $\psi={}$'.format(azimuth)
     plt.title(title_str)
     plt.legend()
     if save:
@@ -314,6 +327,7 @@ def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, l
             gpath = 'no_ground_plane/'
         plt.savefig('plots/' + gpath + loc + '/residuals_' + str(azimuth))
     plt.show()
+
 
 def save_all_plots(loc='mars', ground_plane=True, simulation='edges_hb'):
 #    azimuths = [0, 30, 60, 90, 120, 150]
