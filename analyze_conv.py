@@ -56,7 +56,7 @@ def read_hdf5(azimuth, varname, loc, ground_plane=True, simulation='edges_hb'):
         elif simulation == 'edges_lb':
             g2 = 'EDGES_lowband/'
         elif simulation == 'FEKO':
-            g2 = 'FEKO_simulation' 
+            g2 = 'FEKO_simulation/' 
         gpath = g1 + g2
     else:
         gpath = 'no_ground_plane/'
@@ -65,11 +65,17 @@ def read_hdf5(azimuth, varname, loc, ground_plane=True, simulation='edges_hb'):
 #        print([key for key in hf.keys()])
         var=hf.get(varname)
         var_arr = np.array(var)
-    if loc == 'edges':
- #       return var_arr[0]
-        return var_arr
+    if var_arr.shape[0] == 1:
+       if len(var_arr.shape) == 2:
+           return var_arr[0, :]
+       elif len(var_arr.shape) == 3:
+           return var_arr[0, :, :]
+       else:
+           print('read hdf5 fcn, shape of var is')
+           print(var_arr.shape)
+           return var_arr
     else:
-       return var_arr
+        return var_arr
 
 def get_ftl(azimuth, loc='mars', ground_plane=True, simulation='edges_hb', new=False, return_fl=True, return_t=True):
     if not new:
@@ -291,6 +297,9 @@ def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_p
 def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, Nfg_array=[5, 6], loc='mars', ground_plane=True, simulation='edges_hb', model_type='LINLOG', avg=False, save=False):
     # plots for five-term fit and six-term fit
     f, t, l = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation)
+    print(f.shape)
+    print(t.shape)
+    print(l.shape)
     if avg:
         t = np.mean(t, axis=0)
     rms, res = compute_rms(f, t, flow=flow, fhigh=fhigh, Nfg_array=Nfg_array, model_type=model_type)

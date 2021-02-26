@@ -10,7 +10,7 @@ galactic_coord_file = 'no_git_files/pixel_coords_map_ring_galactic_res9.fits'
 parent_save = 'no_git_files/'
 antenna = 'bd'
 ground_plane = True
-loc = 'mars'
+loc = 'edges'
 simulation = 'EDGES_lowband'
 lowband = True
 if simulation == 'EDGES_highband':
