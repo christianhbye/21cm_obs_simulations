@@ -5,7 +5,7 @@ import os
 import general as gen
 import matplotlib.pyplot as plt
 
-def plot_beam(beam_name, antenna_orientation, phi, gain_in=None, frequency_in=None):
+def plot_beam(beam_name, antenna_orientation, phi, gain_in=None, frequency_in=None, climbeam=None, climderiv=None, save=False):
     if gain_in.any() and frequency_in.any():
         gain = gain_in
         f = frequency_in
@@ -20,15 +20,21 @@ def plot_beam(beam_name, antenna_orientation, phi, gain_in=None, frequency_in=No
         gain = gain[:, :, :-1] # cut last angle since 0 = 360 degrees
     print('Min frequency = {}'.format(f.min()))
     print('Max frequency = {}'.format(f.max()))
+    if f.min() > 1e6:
+        f /= 1e6 # to MHz
+        print('Convert frequency')
+        print('Min frequency = {}'.format(f.min()))
+        print('Max frequency = {}'.format(f.max()))
     print('Frequency shape = {}'.format(f.shape))
     plt.figure()
     #plt.imshow(gain[:, phi, 0:90], aspect='auto', extent=[0, 90, f.max(), f.min()])
     plt.imshow(gain[:, :, phi], aspect='auto', extent=[0, 90, f.max(), f.min()])
+    if climbeam:
+        plt.clim(climbeam)
     plt.colorbar()
-#    plt.draw()
     plt.title(r'Gain ($\phi = {}$)'.format(phi) +'\n' + beam_name)
- #   plt.draw()
-    plt.figure()
+    if save:
+        plt.savefig('beam')
     dG = gain[1:, :, phi] - gain[:-1, :, phi]
     diff = f[1:] - f[:-1]
     assert diff.all() == f[1] - f[0], 'not constant frequency spacing'
@@ -36,8 +42,12 @@ def plot_beam(beam_name, antenna_orientation, phi, gain_in=None, frequency_in=No
     derivative = dG/df
     plt.figure()
     plt.imshow(derivative, aspect='auto', extent=[0, 90, f.max(), f.min()])
+    if climderiv:
+        plt.clim(climderiv)
     plt.colorbar()
-    plt.title('Derivative, phi = %d \n' %(phi) + beam_name)
+    plt.title(r'Derivative ($\phi = {}$)'.format(phi) +'\n'+ beam_name)
+    if save:
+        plt.savefig('deriv')
 
 def new_read_hdf5(azimuth, varname, loc='mars'):
     ## NOT UPDATED
@@ -295,7 +305,7 @@ def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_p
         plt.savefig('plots/' + gpath + loc +'/rms_plots/rms_comparison')
     plt.show()
 
-def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, Nfg_array=[5, 6], loc='mars', ground_plane=True, simulation='edges_hb', model_type='LINLOG', avg=False, save=False):
+def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, Nfg_array=[5, 6], loc='mars', ground_plane=True, simulation='edges_hb', model_type='LINLOG', avg=False, save=False, ylim=None):
     # plots for five-term fit and six-term fit
     f, t, l = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation)
     print(f.shape)
@@ -320,6 +330,8 @@ def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, N
         plt.text(x=f.max()-0.5*(f.max()-f.min()), y=res[0, :, :].min(), s=s1, bbox=dict(facecolor='wheat'))
     plt.xlabel(r'$\nu$ [MHz]')
     plt.ylabel('T [K]')
+    if ylim:
+        plt.ylim(ylim)
     title_str = r'Residuals vs Frequency for $\psi={}$'.format(azimuth)
     plt.title(title_str)
     plt.legend()

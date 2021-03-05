@@ -146,9 +146,9 @@ def plot_waterfalls_diff(f, t, l, ref_t, psi0, ref_psi0, clim=None, savepath=Non
 def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='LINLOG'):
     frequency_vector = f[(f >= flow) & (f <= fhigh)]
     if len(t.shape) == 2:
-        temp_array = t[:, (f>=flow) & (f<=fhigh)]
+#        temp_array = t[:, (f>=flow) & (f<=fhigh)]
     else:
-        temp_array = t[(f>=flow) & (f<=fhigh)]
+#        temp_array = t[(f>=flow) & (f<=fhigh)]
         temp_array = np.expand_dims(temp_array, axis=0)
     rms_values = np.empty((len(temp_array), len(Nfg_array)))
     residuals = np.empty((len(Nfg_array), len(temp_array[:, 0]), len(temp_array[0, :])))
@@ -297,6 +297,34 @@ def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, N
         plt.savefig('plots/' + gpath + loc + '/residuals_' + str(azimuth))
     plt.show()
 
+def binLST(f, temp, lst, bins, model='LINLOG', band='low', Nfg=5):
+    width = int(len(lst)/bins)
+    print(width)
+    rms_arr = np.empty(bins)
+    if band == 'low':
+        flow = 50
+        fhigh = 100
+    else:
+        flow = 100
+        fhigh = 190
+    f = f[(f>=flow) & (f<=fhigh)]
+    res_arr = np.empty((len(f), bins))
+    plt.figure()
+    for n in range(bins):
+        l = lst[n*width : (n+1)* width]
+        if n == bins-1:
+            l = lst[n*width:]
+        t = temp[(lst>=l.min()) & (lst<=l.min())]
+        tavg = np.mean(t, axis=1)
+        rms, res = compute_rms(f, t, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])
+        res_arr[:, n] = res[0, :, :] # only value of Nfg
+        rms_arr[n] = rms[:, 0]
+        plt.plot(f, res[0, :, :], label='Bin {d}'.format(n))
+    plt.legend()
+    plt.title('LST averaged spectra using bins of width {} hr'.format(width))
+    plt.xlabel(r'$\nu$ [MHz]')
+    plt.ylabel('RMS [K]')
+    return rms_arr
 
 def get_best_LST_combination(loc, ground_plane, simulation, azimuth=0, model_type='LINLOG', Nfg=[5], flow=50, fhigh=100):
     f, t, l = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation)
