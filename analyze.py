@@ -146,9 +146,9 @@ def plot_waterfalls_diff(f, t, l, ref_t, psi0, ref_psi0, clim=None, savepath=Non
 def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='LINLOG'):
     frequency_vector = f[(f >= flow) & (f <= fhigh)]
     if len(t.shape) == 2:
-#        temp_array = t[:, (f>=flow) & (f<=fhigh)]
+        temp_array = t[:, (f>=flow) & (f<=fhigh)]
     else:
-#        temp_array = t[(f>=flow) & (f<=fhigh)]
+        temp_array = t[(f>=flow) & (f<=fhigh)]
         temp_array = np.expand_dims(temp_array, axis=0)
     rms_values = np.empty((len(temp_array), len(Nfg_array)))
     residuals = np.empty((len(Nfg_array), len(temp_array[:, 0]), len(temp_array[0, :])))
@@ -264,6 +264,7 @@ def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, N
     print(rms.shape)
     print(res.shape)
     f = f[(f >= flow) & (f <= fhigh)]
+    print(f.shape)
     plt.figure()
     if not avg:
         for lst in lst_for_plot:
@@ -297,34 +298,60 @@ def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, N
         plt.savefig('plots/' + gpath + loc + '/residuals_' + str(azimuth))
     plt.show()
 
-def binLST(f, temp, lst, bins, model='LINLOG', band='low', Nfg=5):
+def binLST(f_in, temp, lst, bins, model='LINLOG', band='low', Nfg=5, split=4, ylim=None, savepath=None):
     width = int(len(lst)/bins)
-    print(width)
-    rms_arr = np.empty(bins)
     if band == 'low':
         flow = 50
         fhigh = 100
     else:
         flow = 100
         fhigh = 190
-    f = f[(f>=flow) & (f<=fhigh)]
-    res_arr = np.empty((len(f), bins))
+    f = f_in[(f_in>=flow) & (f_in<=fhigh)]
+    temp = temp[:, (f_in>=flow) & (f_in<=fhigh)]
     plt.figure()
+    rms_str = 'RMS:'
+    resmin = 0
     for n in range(bins):
-        l = lst[n*width : (n+1)* width]
+        if n % split == 0 and n != 0:
+            plt.legend()
+            plt.title('LST averaged spectra using bins of width {:d} hr'.format(int(width/10)))
+            plt.xlabel(r'$\nu$ [MHz]')
+            plt.ylabel('RMS [K]')
+            bbd = {}
+            bbd['facecolor'] = 'wheat'
+            plt.text(x=fhigh-0.5*(fhigh-flow), y=resmin, s=rms_str, bbox=bbd)
+            plt.ylim(ylim)
+            if savepath:
+                suf = str(int(n/split))
+                sp = 'plots/' + savepath + suf
+                plt.savefig(sp)
+            plt.figure()
+            rms_str = 'RMS:'
+        lstmin = n * width
+        lstmax = lstmin + width
         if n == bins-1:
-            l = lst[n*width:]
-        t = temp[(lst>=l.min()) & (lst<=l.min())]
-        tavg = np.mean(t, axis=1)
-        rms, res = compute_rms(f, t, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])
-        res_arr[:, n] = res[0, :, :] # only value of Nfg
-        rms_arr[n] = rms[:, 0]
-        plt.plot(f, res[0, :, :], label='Bin {d}'.format(n))
+            t = temp[lstmin:, :]
+        else:
+            t = temp[lstmin:lstmax, :]
+        tavg = np.mean(t, axis=0)
+        rms, res = compute_rms(f, tavg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])
+        rms_str += '\n{:d}-{:d} hr: {:.3g}'.format(int(lstmin/10), int(lstmax/10), rms[0, 0])
+        plt.plot(f, res[0, 0, :], label='{:d}-{:d} hr'.format(int(lstmin/10), int(lstmax/10)))
+        if res[0, 0, :].min() < resmin:
+            resmin = res[0, 0, :].min()
     plt.legend()
-    plt.title('LST averaged spectra using bins of width {} hr'.format(width))
+    plt.title('LST averaged spectra using bins of width {:d} hr'.format(int(width/10)))
     plt.xlabel(r'$\nu$ [MHz]')
     plt.ylabel('RMS [K]')
-    return rms_arr
+    plt.ylim(ylim)
+    bbd = {}
+    bbd['facecolor'] = 'wheat'
+    ytext = resmin
+    plt.text(x=fhigh-0.5*(fhigh-flow), y=ytext, s=rms_str, bbox=bbd)
+    if savepath:
+        sp = 'plots/' + savepath
+        plt.savefig(sp)
+    return None
 
 def get_best_LST_combination(loc, ground_plane, simulation, azimuth=0, model_type='LINLOG', Nfg=[5], flow=50, fhigh=100):
     f, t, l = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation)
