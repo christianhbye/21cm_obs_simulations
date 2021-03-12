@@ -1,5 +1,6 @@
 import h5py
 import numpy as np
+from scipy.signal.windows import gaussian
 import os
 import general as gen
 import matplotlib.pyplot as plt
@@ -252,20 +253,21 @@ def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_p
         plt.savefig('plots/' + gpath + loc +'/rms_plots/rms_comparison')
     plt.show()
 
-def plot_residuals(f, t, l, azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, Nfg_array=[5, 6], model_type='LINLOG', savepath=None, ylim=None):
+def plot_residuals(f, t, l, azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, Nfg_array=[5, 6], model_type='LINLOG', savepath=None, ylim=None, textloc=None):
     # plots for five-term fit and six-term fit
-    f, t, l = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation)
     rms, res = compute_rms(f, t, flow=flow, fhigh=fhigh, Nfg_array=Nfg_array, model_type=model_type)
     f = f[(f >= flow) & (f <= fhigh)]
     plt.figure()
-            plt.plot(f, res[0, lst_point, :], label='LST = {} hrs'.format(lst))
     s1 = 'RMS\n'
     for i, n in enumerate(Nfg_array):
         for lst in lst_for_plot:
             lst_point = int(10 * lst) # since resolution is .1 hours
             plt.plot(f, res[i, lst_point, :], label='LST = {} hrs, parameters = {}'.format(lst, n))
             s1 += 'LST = {} hrs, '.format(lst) + str(n) + ' parameters: {:.3g} \n'.format(rms[0, i])
-            plt.text(x=f.max()-0.5*(f.max()-f.min()), y=res[0, :, :].min(), s=s1, bbox=dict(facecolor='wheat'))
+    if not textloc:
+        plt.text(x=f.max()-0.5*(f.max()-f.min()), y=res[0, int(10*lst_for_plot[0]), :].min(), s=s1, bbox=dict(facecolor='wheat'))
+    else:
+        plt.text(x=textloc[0], y=textloc[1], s=s1, fontsize='small', bbox=dict(facecolor='wheat', alpha=0.5))
     plt.xlabel(r'$\nu$ [MHz]')
     plt.ylabel('T [K]')
     if ylim:
@@ -331,6 +333,32 @@ def binLST(f_in, temp, lst, bins, model='LINLOG', band='low', Nfg=5, split=4, yl
         sp = 'plots/' + savepath
         plt.savefig(sp)
     return None
+
+def add_Gaussian(f, t, l, width, amplitude, centre=75):
+    lstpoint = int(10 * l)
+    M = 149 # number of points, the gaussian will be centred at the middle
+    g = gaussian(M, std=width)
+    g *= amplitude
+    find = [int(freq) for freq in f]
+    g_slice = g[find]
+    newt = t.copy()
+    newt[lstpoint, :] += g_slice
+    return newt
+
+def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=75, model='LINLOG', Nfg=5, flow=50, fhigh=100):
+    lstpoint = int(10 * l)
+    rms_ref = compute_rms(f, t[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
+    rms_g_arr = np.empty((len(width_arr), len(amplitude_arr)))
+    for i, w in enumerate(width_arr):
+        for j, a in enumerate(ampltiude_arr):
+            tg = add_Gaussian(f, t, l, w, a, centre=centre)
+            rms_g = compute_rms(f, tg[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
+            print(rms_g.shape)
+            rms_g_arr[i, j] = rms_g[0]
+    plt.imshow(rms_g_arr/rms_f, aspect='auto', extent=[(amplitude_arr.max(), amplitude_arr.min()), (widht_arr.min(), width_arr.min())])
+    plt.xlabel('Width')
+    plt.ylabel('Amplitude')
+
 
 def get_best_LST_combination(loc, ground_plane, simulation, azimuth=0, model_type='LINLOG', Nfg=[5], flow=50, fhigh=100):
     f, t, l = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation)
