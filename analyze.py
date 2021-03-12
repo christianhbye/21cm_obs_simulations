@@ -278,6 +278,7 @@ def plot_residuals(f, t, l, azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhi
     if savepath:
         plt.savefig('plots/' + savepath)
     plt.show()
+    return rms
 
 def binLST(f_in, temp, lst, bins, model='LINLOG', band='low', Nfg=5, split=4, ylim=None, savepath=None):
     width = int(len(lst)/bins)
@@ -342,7 +343,10 @@ def add_Gaussian(f, t, l, width, amplitude, centre=75):
     find = [int(freq) for freq in f]
     g_slice = g[find]
     newt = t.copy()
-    newt[lstpoint, :] += g_slice
+    if len(newt.shape) == 1:
+        newt += g_slice
+    else:
+        newt[lstpoint, :] += g_slice
     return newt
 
 def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=75, model='LINLOG', Nfg=5, flow=50, fhigh=100):
@@ -350,14 +354,18 @@ def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=75, model='LINLOG', N
     rms_ref = compute_rms(f, t[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
     rms_g_arr = np.empty((len(width_arr), len(amplitude_arr)))
     for i, w in enumerate(width_arr):
-        for j, a in enumerate(ampltiude_arr):
+        for j, a in enumerate(amplitude_arr):
             tg = add_Gaussian(f, t, l, w, a, centre=centre)
             rms_g = compute_rms(f, tg[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
-            print(rms_g.shape)
-            rms_g_arr[i, j] = rms_g[0]
-    plt.imshow(rms_g_arr/rms_f, aspect='auto', extent=[(amplitude_arr.max(), amplitude_arr.min()), (widht_arr.min(), width_arr.min())])
-    plt.xlabel('Width')
-    plt.ylabel('Amplitude')
+            rms_g_arr[i, j] = rms_g[0, 0]
+    plt.figure()
+    right, left = amplitude_arr.max(), amplitude_arr.min()
+    bottom, top = width_arr.min(), width_arr.max()
+    plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top])
+#    plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[amplitude_arr.max(), amplitude_arr.min(), width_arr.min(), width_arr.min()])
+    plt.ylabel('Width')
+    plt.xlabel('Amplitude')
+    plt.colorbar()
 
 
 def get_best_LST_combination(loc, ground_plane, simulation, azimuth=0, model_type='LINLOG', Nfg=[5], flow=50, fhigh=100):
