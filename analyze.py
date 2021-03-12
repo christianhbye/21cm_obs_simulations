@@ -252,50 +252,29 @@ def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_p
         plt.savefig('plots/' + gpath + loc +'/rms_plots/rms_comparison')
     plt.show()
 
-def plot_residuals(azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, Nfg_array=[5, 6], loc='mars', ground_plane=True, simulation='edges_hb', model_type='LINLOG', avg=False, save=False, ylim=None):
+def plot_residuals(f, t, l, azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, Nfg_array=[5, 6], model_type='LINLOG', savepath=None, ylim=None):
     # plots for five-term fit and six-term fit
     f, t, l = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation)
-    print(f.shape)
-    print(t.shape)
-    print(l.shape)
-    if avg:
-        t = np.mean(t, axis=0)
     rms, res = compute_rms(f, t, flow=flow, fhigh=fhigh, Nfg_array=Nfg_array, model_type=model_type)
-    print(rms.shape)
-    print(res.shape)
     f = f[(f >= flow) & (f <= fhigh)]
-    print(f.shape)
     plt.figure()
-    if not avg:
-        for lst in lst_for_plot:
-            lst_point = 10 * lst # since resolution is .1 hours
             plt.plot(f, res[0, lst_point, :], label='LST = {} hrs'.format(lst))
-    else:
-        s1 = 'RMS\n'
-        for i, n in enumerate(Nfg_array):
-            plt.plot(f, res[i, 0, :], label=str(n))
-            s1 += str(n) + ' parameters: {:.3g} \n'.format(rms[0, i])
-        plt.text(x=f.max()-0.5*(f.max()-f.min()), y=res[0, :, :].min(), s=s1, bbox=dict(facecolor='wheat'))
+    s1 = 'RMS\n'
+    for i, n in enumerate(Nfg_array):
+        for lst in lst_for_plot:
+            lst_point = int(10 * lst) # since resolution is .1 hours
+            plt.plot(f, res[i, lst_point, :], label='LST = {} hrs, parameters = {}'.format(lst, n))
+            s1 += 'LST = {} hrs, '.format(lst) + str(n) + ' parameters: {:.3g} \n'.format(rms[0, i])
+            plt.text(x=f.max()-0.5*(f.max()-f.min()), y=res[0, :, :].min(), s=s1, bbox=dict(facecolor='wheat'))
     plt.xlabel(r'$\nu$ [MHz]')
     plt.ylabel('T [K]')
     if ylim:
         plt.ylim(ylim)
-    title_str = r'Residuals vs Frequency for $\psi={}$'.format(azimuth)
+    title_str = r'Residuals vs Frequency for $\psi_0={}$'.format(azimuth)
     plt.title(title_str)
     plt.legend()
-    if save:
-        if ground_plane:
-            g1 = 'inf_metal_ground_plane/'
-            if simulation == 'edges_hb':
-                g2 = 'EDGES_highband/'
-            elif simulation == 'edges_lb':
-                g2 = 'EDGES_lowband/'
-            elif simulation == 'FEKO':
-                g2 = 'FEKO_simulation' 
-            gpath = g1 + g2
-        else:
-            gpath = 'no_ground_plane/'
-        plt.savefig('plots/' + gpath + loc + '/residuals_' + str(azimuth))
+    if savepath:
+        plt.savefig('plots/' + savepath)
     plt.show()
 
 def binLST(f_in, temp, lst, bins, model='LINLOG', band='low', Nfg=5, split=4, ylim=None, savepath=None):
