@@ -342,8 +342,9 @@ def binLST(f_in, temp, lst, bins, model='LINLOG', band='low', Nfg=5, split=4, yl
     return None
 
 def add_Gaussian(f, t, l, width, amplitude, centre=75):
-    lstpoint = int(10 * l)
     M = 149 # number of points, the gaussian will be centred at the middle
+    sigma = width
+    sigma /= 2 * np.sqrt(2 * np.log(2))
     g = gaussian(M, std=width)
     g *= amplitude
     find = [int(freq) for freq in f]
@@ -352,26 +353,43 @@ def add_Gaussian(f, t, l, width, amplitude, centre=75):
     if len(newt.shape) == 1:
         newt += g_slice
     else:
+        lstpoint = int(10 * l)
         newt[lstpoint, :] += g_slice
     return newt
 
-def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=75, model='LINLOG', Nfg=5, flow=50, fhigh=100):
+def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=75, model='LINLOG', Nfg=5, flow=50, fhigh=100, clim=None, log10=False):
     lstpoint = int(10 * l)
-    rms_ref = compute_rms(f, t[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
+    if len(t.shape) == 1:
+        rms_ref = compute_rms(f, t, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0][0, 0]
+    else:
+        rms_ref = compute_rms(f, t[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0][0, 0]
     rms_g_arr = np.empty((len(width_arr), len(amplitude_arr)))
     for i, w in enumerate(width_arr):
         for j, a in enumerate(amplitude_arr):
             tg = add_Gaussian(f, t, l, w, a, centre=centre)
-            rms_g = compute_rms(f, tg[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
+            if len(tg.shape) == 1:
+                rms_g = compute_rms(f, tg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
+            else:
+                rms_g = compute_rms(f, tg[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
             rms_g_arr[i, j] = rms_g[0, 0]
     plt.figure()
     right, left = amplitude_arr.max(), amplitude_arr.min()
-    bottom, top = width_arr.min(), width_arr.max()
-    plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top])
-#    plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[amplitude_arr.max(), amplitude_arr.min(), width_arr.min(), width_arr.min()])
-    plt.ylabel('Width')
-    plt.xlabel('Amplitude')
-    plt.colorbar()
+    bottom, top = width_arr.max(), width_arr.min()
+    if not log10:
+        plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top])
+    else:
+        plt.imshow(np.log10(rms_g_arr/rms_ref), aspect='auto', extent=[left, right, bottom, top])
+    plt.ylabel('Width [MHz]')
+    plt.xlabel('Amplitude [K]')
+    plt.title('RMS(Amplitude, Width) / RMS(No Gaussian)')
+    cbar = plt.colorbar()
+    if not log10:
+        cbarlabel = 'RMS/({:.2g} K)'.format(rms_ref)
+    else:
+        cbarlabel = 'log10(RMS/({:.2g} K))'.format(rms_ref)
+    cbar.set_label(cbarlabel)
+    if clim:
+        plt.clim(*clim)
 
 
 def get_best_LST_combination(loc, ground_plane, simulation, azimuth=0, model_type='LINLOG', Nfg=[5], flow=50, fhigh=100):
