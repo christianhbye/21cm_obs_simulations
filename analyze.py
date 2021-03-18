@@ -301,6 +301,7 @@ def binLST(f_in, temp, lst, bins, model='LINLOG', band='low', Nfg=5, split=4, yl
             plt.ylabel('Residuals [K]')
             bbd = {}
             bbd['facecolor'] = 'wheat'
+            bbd['alpha'] = 0.7
             plt.text(x=fhigh-0.5*(fhigh-flow), y=resmin, s=rms_str, bbox=bbd)
             plt.ylim(ylim)
             if savepath:
