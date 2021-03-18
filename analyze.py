@@ -34,7 +34,7 @@ def read_hdf5(azimuth, varname, loc, ground_plane=True, simulation='edges_hb'):
     else:
         return var_arr
 
-def get_ftl(azimuth, loc='mars', ground_plane=True, simulation='edges_hb', return_fl=True, return_t=True):
+def get_ftl(azimuth, loc='mars', ground_plane=False, simulation='FEKO', return_fl=True, return_t=True):
     f = read_hdf5(azimuth, 'freq_out', loc=loc, ground_plane=ground_plane, simulation=simulation)
     t = read_hdf5(azimuth, 'ant_temp_out', loc=loc, ground_plane=ground_plane, simulation=simulation)
     lst = read_hdf5(azimuth, 'LST_out', loc=loc, ground_plane=ground_plane, simulation=simulation)
@@ -280,7 +280,7 @@ def plot_residuals(f, t, l, azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhi
     plt.show()
     return rms
 
-def binLST(f_in, temp, lst, bins, model='LINLOG', band='low', Nfg=5, split=4, ylim=None, savepath=None):
+def binLST(f_in, temp, lst, bins, model='LINLOG', band='low', Nfg=5, split=4, ylim=None, savepath=None, textloc=None):
     width = int(len(lst)/bins)
     if band == 'low':
         flow = 50
@@ -298,7 +298,7 @@ def binLST(f_in, temp, lst, bins, model='LINLOG', band='low', Nfg=5, split=4, yl
             plt.legend()
             plt.title('LST averaged spectra using bins of width {:d} hr'.format(int(width/10)))
             plt.xlabel(r'$\nu$ [MHz]')
-            plt.ylabel('RMS [K]')
+            plt.ylabel('Residuals [K]')
             bbd = {}
             bbd['facecolor'] = 'wheat'
             plt.text(x=fhigh-0.5*(fhigh-flow), y=resmin, s=rms_str, bbox=bbd)
@@ -317,19 +317,24 @@ def binLST(f_in, temp, lst, bins, model='LINLOG', band='low', Nfg=5, split=4, yl
             t = temp[lstmin:lstmax, :]
         tavg = np.mean(t, axis=0)
         rms, res = compute_rms(f, tavg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])
-        rms_str += '\n{:d}-{:d} hr: {:.3g}'.format(int(lstmin/10), int(lstmax/10), rms[0, 0])
+        rms_str += '\n{:d}-{:d} hr: {:.3g} K'.format(int(lstmin/10), int(lstmax/10), rms[0, 0])
         plt.plot(f, res[0, 0, :], label='{:d}-{:d} hr'.format(int(lstmin/10), int(lstmax/10)))
         if res[0, 0, :].min() < resmin:
             resmin = res[0, 0, :].min()
     plt.legend()
     plt.title('LST averaged spectra using bins of width {:d} hr'.format(int(width/10)))
     plt.xlabel(r'$\nu$ [MHz]')
-    plt.ylabel('RMS [K]')
+    plt.ylabel('Residuals [K]')
     plt.ylim(ylim)
     bbd = {}
     bbd['facecolor'] = 'wheat'
-    ytext = resmin
-    plt.text(x=fhigh-0.5*(fhigh-flow), y=ytext, s=rms_str, bbox=bbd)
+    bbd['alpha'] = 0.7
+    if textloc:
+        xtext, ytext = textloc
+    else:
+        xtext = fhigh - 0.5 * (fhigh-flow)
+        ytext = resmin
+    plt.text(x=xtext, y=ytext, s=rms_str, bbox=bbd)
     if savepath:
         sp = 'plots/' + savepath
         plt.savefig(sp)
