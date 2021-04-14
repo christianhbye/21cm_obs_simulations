@@ -11,7 +11,7 @@ galactic_coord_file = '../no_git_files/pixel_coords_map_ring_galactic_res9.fits'
 antenna = 'bd'
 ground_plane = False
 loc = 'sweep'
-lat_sweep = sys.argv[1] * 1.5
+lat_sweep = int(sys.argv[1]) * 1.5
 simulation = 'FEKO'
 lowband = True
 
