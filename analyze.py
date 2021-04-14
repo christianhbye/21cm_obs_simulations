@@ -5,7 +5,7 @@ import os
 import general as gen
 import matplotlib.pyplot as plt
 
-def read_hdf5(azimuth, varname, loc, ground_plane=True, simulation='edges_hb'):
+def read_hdf5(azimuth, varname, loc, sweep_lat=None, ground_plane=True, simulation='edges_hb'):
     if ground_plane:
         g1 = 'inf_metal_ground_plane/'
         if simulation == 'edges_hb':
@@ -17,7 +17,10 @@ def read_hdf5(azimuth, varname, loc, ground_plane=True, simulation='edges_hb'):
         gpath = g1 + g2
     else:
         gpath = 'no_ground_plane/'
-    path = 'no_git_files/sky_models/blade_dipole/' + gpath + loc + '/save_parallel_convolution_' + str(azimuth)
+    if loc == 'sweep':
+        path = 'sweep/sky_models/blade_dipole/' + gpath + 'sweep/lat_' + str(sweep_lat) + '/save_parallel_convolution_' + str(azimuth)
+    else:
+        path = 'no_git_files/sky_models/blade_dipole/' + gpath + loc + '/save_parallel_convolution_' + str(azimuth)
     with h5py.File(path, 'r') as hf:
 #        print([key for key in hf.keys()])
         var=hf.get(varname)
@@ -34,10 +37,10 @@ def read_hdf5(azimuth, varname, loc, ground_plane=True, simulation='edges_hb'):
     else:
         return var_arr
 
-def get_ftl(azimuth, loc='mars', ground_plane=False, simulation='FEKO', return_fl=True, return_t=True):
-    f = read_hdf5(azimuth, 'freq_out', loc=loc, ground_plane=ground_plane, simulation=simulation)
-    t = read_hdf5(azimuth, 'ant_temp_out', loc=loc, ground_plane=ground_plane, simulation=simulation)
-    lst = read_hdf5(azimuth, 'LST_out', loc=loc, ground_plane=ground_plane, simulation=simulation)
+def get_ftl(azimuth, loc='mars', sweep_lat=None, ground_plane=False, simulation='FEKO', return_fl=True, return_t=True):
+    f = read_hdf5(azimuth, 'freq_out', loc=loc, sweep_lat=sweep_lat, ground_plane=ground_plane, simulation=simulation)
+    t = read_hdf5(azimuth, 'ant_temp_out', loc=loc, sweep_lat=sweep_lat, ground_plane=ground_plane, simulation=simulation)
+    lst = read_hdf5(azimuth, 'LST_out', loc=loc, sweep_lat=sweep_lat, ground_plane=ground_plane, simulation=simulation)
     if return_fl and return_t:
         return f, t, lst
     elif return_fl and not return_t:
