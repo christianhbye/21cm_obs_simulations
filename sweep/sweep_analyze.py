@@ -2,20 +2,40 @@ import analyze as a
 import matplotlib.pyplot as plt
 import numpy as np
 
+def reverse_and_shift(array, return_ind=False):
+    '''Currently we have lst in increasing order 0-24 hrs,
+    Mozdzen have 12-10-8-..-0-2-4-...12. This function converts
+    to that order.'''
+    ind_array = np.arange(len(array)) # array of indices
+    mp = int(len(ind_array)/2) # mid-index, maps to value 0
+    new_arr = ind_array.copy()
+    new_arr -= mp # now the mid-index has value 0
+    part1 = new_arr[mp+1:] # first half
+    part2 = new_arr[:mp] + ind_array[-1] + 1 # second half
+    final_arr = np.empty(new_arr.shape)
+    # reverse order
+    final_arr[:mp] = part1[::-1]
+    final_arr[mp] = 0
+    final_arr[mp+1:] = part2[::-1]
+    new_ind = final_arr.astype(int)
+    if return_ind:
+        return new_ind # return the index array
+    else:
+        return array[new_ind] # return the new array
+
+def rands_nd(array, axis):
+    ''' N-d version of reverse and shift'''
+    if axis == 0:
+        new = reverse_and_shift(array)
+    elif axis == 1:
+        idx = reverse_and_shift(array[0, :], return_ind=True)
+        new = array[:, idx]
+    return new
+
 def plot(azimuth=0, lat_min=-90, lat_max=90, lat_res=1.5, model='LINLOG', Nfg=5, save=False):
     N_lat = int((lat_max - lat_min)/lat_res) + 1
     lat_array = np.linspace(lat_max, lat_min, N_lat)
     qwefr, fwefr, lst = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat_array[0], ground_plane=False, simulation='FEKO')
-    lst = np.arange(1, 242)
-    test = np.empty(lst.shape)
-    test = lst.copy()[::-1] # reverse order
-    mp = int((len(lst)+1)/2) - 1
-    print(mp)
-    test2 = np.empty(test.shape)
-    test2[:mp] = test[mp+1:]
-    test2[mp+1:] = test[:mp]
-    print(mp)
-    print(test2)
     rms_arr = np.empty((N_lat, len(lst)))
     it = np.nditer(lat_array, flags=['f_index'])
     for lat in it:
@@ -26,12 +46,27 @@ def plot(azimuth=0, lat_min=-90, lat_max=90, lat_res=1.5, model='LINLOG', Nfg=5,
         rms = a.compute_rms(f, t, flow, fhigh, Nfg_array=[Nfg], model_type=model)[0]
         rms_arr[it.index, :] = rms[:, 0]
     # put lst=0 in the middle
-    new_rms_arr = np.empty(rms_arr.shape)
-    new_rms_arr[:, ]
+    new_rms_arr = rands_nd(rms_arr, 1)
+    earr = [lst.min(), lst.max(), lat_min, lat_max]
     plt.figure()
-    plt.imshow(rms_arr, aspect='auto', extent=[lst.min(), lst.max(), lat_min, lat_max])
-    plt.colorbar()
+    plt.imshow(rms_arr, aspect='auto')
+    plt.colorbar(label='T [K]')
+    plt.figure()
+    plt.imshow(new_rms_arr, aspect='auto')
+    locs = [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240]
+    labso = [120, 100, 80, 60, 40, 20, 0, 220, 200, 180, 160, 140, 120]
+    labs = [int(l/10) for l in labso]
+    plt.xticks(locs, labs)
+    ylocs = [0, 10, 20, 30] 
+    ylabs = [45, 30, 15, 0]
+    ## more general
+    # Nticks = 10
+    # deltay = int(N_latitudes/(Nticks-1))
+    # ylocs = np.arange(N_latitudes) * deltay
+    # ylabs = lat_array[ylocs]
+    plt.yticks(ylocs, ylabs)
+    plt.colorbar(label='T [K]')
     if save:
         plt.savefig('sweep_' + str(azimuth))
-        
     
+
