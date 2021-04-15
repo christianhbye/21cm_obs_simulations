@@ -32,7 +32,7 @@ def rands_nd(array, axis):
         new = array[:, idx]
     return new
 
-def plot(azimuth=0, lat_min=-90, lat_max=90, lat_res=1.5, model='LINLOG', Nfg=5, save=False):
+def plot(azimuth=0, lat_min=-90, lat_max=90, lat_res=1.5, model='LINLOG', Nfg=5, clim=None, save=False):
     N_lat = int((lat_max - lat_min)/lat_res) + 1
     lat_array = np.linspace(lat_max, lat_min, N_lat)
     qwefr, fwefr, lst = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat_array[0], ground_plane=False, simulation='FEKO')
@@ -48,25 +48,30 @@ def plot(azimuth=0, lat_min=-90, lat_max=90, lat_res=1.5, model='LINLOG', Nfg=5,
     # put lst=0 in the middle
     new_rms_arr = rands_nd(rms_arr, 1)
     earr = [lst.min(), lst.max(), lat_min, lat_max]
+#    plt.figure()
+#    plt.imshow(rms_arr, aspect='auto')
+#    plt.colorbar(label='T [K]')
     plt.figure()
-    plt.imshow(rms_arr, aspect='auto')
-    plt.colorbar(label='T [K]')
-    plt.figure()
-    plt.imshow(new_rms_arr, aspect='auto')
+    plt.imshow(1000 * new_rms_arr, aspect='auto') # *1000 to get mK
     locs = [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240]
     labso = [120, 100, 80, 60, 40, 20, 0, 220, 200, 180, 160, 140, 120]
     labs = [int(l/10) for l in labso]
     plt.xticks(locs, labs)
-    ylocs = [0, 10, 20, 30] 
-    ylabs = [45, 30, 15, 0]
+#    ylocs = [0, 10, 20, 30] 
+#    ylabs = [45, 30, 15, 0]
     ## more general
-    # Nticks = 10
-    # deltay = int(N_latitudes/(Nticks-1))
-    # ylocs = np.arange(N_latitudes) * deltay
-    # ylabs = lat_array[ylocs]
+    Nticks = 11
+    deltay = int((N_lat-1)/(Nticks-1))
+    ylocs = np.arange(Nticks) * deltay
+    ylabs = lat_array[ylocs]
     plt.yticks(ylocs, ylabs)
-    plt.colorbar(label='T [K]')
+    plt.colorbar(label='T [mK]')
+    plt.xlabel('LST [hr]')
+    plt.ylabel('Latitude [deg]')
+    plt.title(r'$\psi_0={}$ deg'.format(azimuth))
+    if clim is not None:
+        plt.clim(clim)
     if save:
-        plt.savefig('sweep_' + str(azimuth))
+        plt.savefig('plots/' + model + '_' + str(azimuth) + '.svg')
     
 
