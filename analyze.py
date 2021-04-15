@@ -6,6 +6,7 @@ import general as gen
 import matplotlib.pyplot as plt
 
 def read_hdf5(azimuth, varname, loc, sweep_lat=None, ground_plane=True, simulation='edges_hb'):
+    parent_path = '/scratch/s/sievers/cbye/21cm_obs_simulations/'
     if ground_plane:
         g1 = 'inf_metal_ground_plane/'
         if simulation == 'edges_hb':
@@ -21,7 +22,7 @@ def read_hdf5(azimuth, varname, loc, sweep_lat=None, ground_plane=True, simulati
         path = 'sweep/sky_models/blade_dipole/' + gpath + 'sweep/lat_' + str(sweep_lat) + '/save_parallel_convolution_' + str(azimuth)
     else:
         path = 'no_git_files/sky_models/blade_dipole/' + gpath + loc + '/save_parallel_convolution_' + str(azimuth)
-    with h5py.File(path, 'r') as hf:
+    with h5py.File(parent_path + path, 'r') as hf:
 #        print([key for key in hf.keys()])
         var=hf.get(varname)
         var_arr = np.array(var)
@@ -112,8 +113,8 @@ def plot_temp_3d(freq_vector, temp_array, lst_vector, psi0, clim=None, savepath=
         freq_vector /= 1e6 # convert to MHz
     freq_min = freq_vector[0]
     freq_max = freq_vector[-1]
-    LST_min = LST_vector[0]
-    LST_max = LST_vector[-1]
+    LST_min = lst_vector[0]
+    LST_max = lst_vector[-1]
     plt.imshow(temp_array, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min])
     plt.title('Antenna Temperature \n' r'$\psi_0 = {}$'.format(psi0))
     plt.ylabel('LST')
@@ -282,6 +283,45 @@ def plot_residuals(f, t, l, azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhi
         plt.savefig('plots/' + savepath)
     plt.show()
     return rms
+
+def sliding_binLST(f_in, temp, lst, bin_width, model='LINLOG', band='low', Nfg=5):
+    if band == 'low':
+        flow = 50
+        fhigh = 100
+    elif band == 'high':
+        flow = 90
+        fhigh = 200
+    f = f_in[(f_in >= flow) & (f_in <= fhigh)]
+    temp = temp[:, (f_in >= flow) & (f_in <= fhigh)]
+    t_avg_arr = np.convolve(temp, np.ones(bin_width)/bin_width, mode='valid') # get sliding 241/bin_width averages
+    print(t_avg_arr.shape)
+    rms_vals = []
+    res_vals = np.empty((len(t_avg_arr), len(lst)))
+    for i, t_avg in enumerate(t_avg_arr):
+        rms, res = compute_rms(f, t_avg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])
+        rms_vals.append(rms)
+        res_vals[i, :] = res
+    min_idx = np.argmin(rms)
+    smallest_res = res_vals[min_idx, :]        
+    smallest_rms = rms[min_idx]
+    lst_range = (min_idx * bin_width, min_idx * bin_width + bin_width)
+    return lst_range, smallest_rms, smalles_res
+
+def getall_sliding_avgs(f_in, temp, lst, bin_widths, band='low', model='LINLOG', Nfg=5, savename=None):
+    N = len(bin_widths)
+    lst_ranges = np.empty(N)
+    rms_arr = np.empty(N)
+    res_arr = np.empty((N, len(lst)))
+    plt.figure()
+    for i, bin_width in enumerate(bin_widths):
+        l, rm, re = sliding_binLST(f_in, temp, lst, bin_width, model=model, band=band, Nfg=Nfg)
+        lst_ranges[i] = l
+        rms_arr[i] = rm
+        res_arr[i, :] = re
+        plt.plot(lst, re, label='Range: '+ str(l) + ', rms: {:.2g}'.format(rm))
+    plt.legend()
+    if savename:
+        plt.savefig(savename)
 
 def binLST(f_in, temp, lst, bins, model='LINLOG', band='low', Nfg=5, split=4, ylim=None, savepath=None, textloc=None):
     width = int(len(lst)/bins)
