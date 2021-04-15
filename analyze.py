@@ -173,14 +173,6 @@ def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_norma
             rms_values[i, j] = rms
     return rms_values, residuals
 
-def plot_rms(lst, rms,):
-    '''
-    plot rms using different number of terms or different models
-    '''
-    plt.figure()
-    plt.plot(lst, rms)
-    
-
 def plot_rms(f, t, lst, flow=50, fhigh=100, Nfg_array=[1, 2, 3, 4, 5, 6], Nfg_split=3, save=False, loc='mars', ground_plane=True, simulation='edges_hb', frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='LINLOG'):
     if type(psi) == int:
         f, t, lst = get_ftl(psi, loc=loc, ground_plane=ground_plane, simulation=simulation)
@@ -284,6 +276,19 @@ def plot_residuals(f, t, l, azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhi
     plt.show()
     return rms
 
+def sliding_average(array, window_length, cycle=True):
+    '''cycle = true means that we slide around like a clock, 1-2-...-11-12-1...,
+    false means to just forget about the ends'''
+    if cycle:
+        new_arr = np.empty(len(array) + window_length - 1)    
+        new_arr[:-(window_length-1)] = np.copy(array)
+        new_arr[-(window_length-1):] = np.copy(array[:window_length-1])
+    else:
+        new_arr = np.copy(array)
+    avg = np.convolve(new_arr, np.ones(window_length)/window_length, mode='valid')
+    return avg
+        
+
 def sliding_binLST(f_in, temp, lst, bin_width, model='LINLOG', band='low', Nfg=5):
     if band == 'low':
         flow = 50
@@ -293,32 +298,41 @@ def sliding_binLST(f_in, temp, lst, bin_width, model='LINLOG', band='low', Nfg=5
         fhigh = 200
     f = f_in[(f_in >= flow) & (f_in <= fhigh)]
     temp = temp[:, (f_in >= flow) & (f_in <= fhigh)]
-    t_avg_arr = np.convolve(temp, np.ones(bin_width)/bin_width, mode='valid') # get sliding 241/bin_width averages
+    t_avg_arr = np.empty(temp.shape)
+    for i in range(temp.shape[1]):
+        t_avg_arr[:, i] = sliding_average(temp[:, i], bin_width) # get sliding 241/bin_width averages
     print(t_avg_arr.shape)
     rms_vals = []
-    res_vals = np.empty((len(t_avg_arr), len(lst)))
+    res_vals = np.empty((len(t_avg_arr), len(f)))
     for i, t_avg in enumerate(t_avg_arr):
         rms, res = compute_rms(f, t_avg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])
-        rms_vals.append(rms)
+        rms_vals.append(rms[0])
         res_vals[i, :] = res
     min_idx = np.argmin(rms)
     smallest_res = res_vals[min_idx, :]        
     smallest_rms = rms[min_idx]
     lst_range = (min_idx * bin_width, min_idx * bin_width + bin_width)
-    return lst_range, smallest_rms, smalles_res
+    return lst_range, smallest_rms, smallest_res
 
 def getall_sliding_avgs(f_in, temp, lst, bin_widths, band='low', model='LINLOG', Nfg=5, savename=None):
     N = len(bin_widths)
-    lst_ranges = np.empty(N)
+    lst_ranges = np.empty((N, 2))
     rms_arr = np.empty(N)
-    res_arr = np.empty((N, len(lst)))
+    if band == 'low':
+        flow = 50
+        fhigh = 100
+    elif band == 'high':
+        flow = 90
+        fhigh = 2000
+    f = f_in[(f_in>=flow) & (f_in<=fhigh)]
+    res_arr = np.empty((N, len(f)))
     plt.figure()
     for i, bin_width in enumerate(bin_widths):
         l, rm, re = sliding_binLST(f_in, temp, lst, bin_width, model=model, band=band, Nfg=Nfg)
-        lst_ranges[i] = l
+        lst_ranges[i, :] = l
         rms_arr[i] = rm
         res_arr[i, :] = re
-        plt.plot(lst, re, label='Range: '+ str(l) + ', rms: {:.2g}'.format(rm))
+        plt.plot(f, re, label='Range: '+ str(l) + ', rms: {}'.format(rm))
     plt.legend()
     if savename:
         plt.savefig(savename)
