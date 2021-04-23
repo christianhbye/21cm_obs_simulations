@@ -60,14 +60,21 @@ def plot(azimuth=0, lat_min=-90, lat_max=90, lat_res=1.5, model='LINLOG', Nfg=5,
 #    ylocs = [0, 10, 20, 30] 
 #    ylabs = [45, 30, 15, 0]
     ## more general
-    Nticks = 11
-    deltay = int((N_lat-1)/(Nticks-1))
-    ylocs = np.arange(Nticks) * deltay
-    ylabs = lat_array[ylocs]
+  #  Nticks = 19
+  #  deltay = int((N_lat-1)/(Nticks-1))
+  #  deltay = 10
+  #  Nticks = 19
+    ylocs = np.arange(19) * 10/1.5
+    ylabs = []
+    for i in range(19):
+       label = 90 - 10*i
+       ylabs.append(label)
+#    ylabs = lat_array[ylocs]
     plt.yticks(ylocs, ylabs)
     plt.colorbar(label='T [mK]')
     plt.xlabel('LST [hr]')
     plt.ylabel('Latitude [deg]')
+    plt.grid(linestyle='--')
     plt.title(r'$\psi_0={}$ deg'.format(azimuth))
     if clim is not None:
         plt.clim(clim)
