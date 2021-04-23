@@ -32,14 +32,14 @@ def rands_nd(array, axis):
         new = array[:, idx]
     return new
 
-def plot(azimuth=0, lat_min=-90, lat_max=90, lat_res=1.5, model='LINLOG', Nfg=5, clim=None, save=False):
+def plot(ground_plane, simulation, azimuth=0, lat_min=-90, lat_max=90, lat_res=1.5, model='LINLOG', Nfg=5, clim=None, save=False):
     N_lat = int((lat_max - lat_min)/lat_res) + 1
     lat_array = np.linspace(lat_max, lat_min, N_lat)
-    qwefr, fwefr, lst = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat_array[0], ground_plane=False, simulation='FEKO')
+    qwefr, fwefr, lst = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat_array[0], ground_plane=ground_plane, simulation=simulation)
     rms_arr = np.empty((N_lat, len(lst)))
     it = np.nditer(lat_array, flags=['f_index'])
     for lat in it:
-        f, t, l = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat, ground_plane=False, simulation='FEKO')
+        f, t, l = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat, ground_plane=ground_plane, simulation=simulation)
         assert l.all() == lst.all()
         flow = 50
         fhigh = 100
