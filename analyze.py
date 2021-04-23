@@ -289,7 +289,7 @@ def sliding_average(array, window_length, cycle=True):
     return avg
         
 
-def sliding_binLST(f_in, temp, lst, bin_width, model='LINLOG', band='low', Nfg=5):
+def sliding_binLST(f_in, temp, bin_width, model='LINLOG', band='low', Nfg=5):
     if band == 'low':
         flow = 50
         fhigh = 100
@@ -300,105 +300,32 @@ def sliding_binLST(f_in, temp, lst, bin_width, model='LINLOG', band='low', Nfg=5
     temp = temp[:, (f_in >= flow) & (f_in <= fhigh)]
     t_avg_arr = np.empty(temp.shape)
     for i in range(temp.shape[1]):
-        t_avg_arr[:, i] = sliding_average(temp[:, i], bin_width) # get sliding 241/bin_width averages
-    print(t_avg_arr.shape)
-    rms_vals = []
-    res_vals = np.empty((len(t_avg_arr), len(f)))
+        t_avg_arr[:, i] = sliding_average(temp[:, i], bin_width)
+    rms_vals = np.empty(temp.shape[0])
     for i, t_avg in enumerate(t_avg_arr):
         rms, res = compute_rms(f, t_avg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])
-        rms_vals.append(rms[0, 0])
-        res_vals[i, :] = res
-    min_idx = np.argmin(rms_vals)
-    smallest_res = res_vals[min_idx, :]        
-    smallest_rms = rms_vals[min_idx]
-   # lst_range = (min_idx * bin_width, min_idx * bin_width + bin_width)
- #   lst_range = (lst[min_idx], lst[int(min_idx + bin_width)])
-    lst_range = (0, 0)
-    return lst_range, smallest_rms, smallest_res
+        rms_vals[i] = rms[0, 0]
+    return rms_vals
 
-def getall_sliding_avgs(f_in, temp, lst, bin_widths, band='low', model='LINLOG', Nfg=5, savename=None):
-    N = len(bin_widths)
-    lst_ranges = np.empty((N, 2))
-    rms_arr = np.empty(N)
-    if band == 'low':
-        flow = 50
-        fhigh = 100
-    elif band == 'high':
-        flow = 90
-        fhigh = 200
-    f = f_in[(f_in>=flow) & (f_in<=fhigh)]
-    res_arr = np.empty((N, len(f)))
+def plot_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5, split=None, ylim=None):
     plt.figure()
-    for i, bin_width in enumerate(bin_widths):
-        l, rm, re = sliding_binLST(f_in, temp, lst, bin_width, model=model, band=band, Nfg=Nfg)
-        lst_ranges[i, :] = l
-        rms_arr[i] = rm
-        res_arr[i, :] = re
-        plt.plot(f, re, label='Range: {:.3f}-{:.3f} hr, rms: {:.5f}'.format(l[0]/10, l[1]/10, rm))
-    plt.legend()
-    if savename:
-        plt.savefig(savename)
-
-def binLST(f_in, temp, lst, bins, model='LINLOG', band='low', Nfg=5, split=4, ylim=None, savepath=None, textloc=None):
-    width = int(len(lst)/bins)
-    if band == 'low':
-        flow = 50
-        fhigh = 100
-    else:
-        flow = 100
-        fhigh = 190
-    f = f_in[(f_in>=flow) & (f_in<=fhigh)]
-    temp = temp[:, (f_in>=flow) & (f_in<=fhigh)]
-    plt.figure()
-    rms_str = 'RMS:'
-    resmin = 0
-    for n in range(bins):
-        if n % split == 0 and n != 0:
+    plt.xlabel('LST')
+    plt.ylabel('RMS')
+    for i, bw in enumerate(bin_widths):
+        if split and i % split == 0 and not i == 0:
             plt.legend()
-            plt.title('LST averaged spectra using bins of width {:d} hr'.format(int(width/10)))
-            plt.xlabel(r'$\nu$ [MHz]')
-            plt.ylabel('Residuals [K]')
-            bbd = {}
-            bbd['facecolor'] = 'wheat'
-            bbd['alpha'] = 0.7
-            plt.text(x=fhigh-0.5*(fhigh-flow), y=resmin, s=rms_str, bbox=bbd)
-            plt.ylim(ylim)
-            if savepath:
-                suf = str(int(n/split))
-                sp = 'plots/' + savepath + suf
-                plt.savefig(sp)
+            if ylim:
+                plt.ylim(ylim)
+            plt.show()
             plt.figure()
-            rms_str = 'RMS:'
-        lstmin = n * width
-        lstmax = lstmin + width
-        if n == bins-1:
-            t = temp[lstmin:, :]
-        else:
-            t = temp[lstmin:lstmax, :]
-        tavg = np.mean(t, axis=0)
-        rms, res = compute_rms(f, tavg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])
-        rms_str += '\n{:d}-{:d} hr: {:.3g} K'.format(int(lstmin/10), int(lstmax/10), rms[0, 0])
-        plt.plot(f, res[0, 0, :], label='{:d}-{:d} hr'.format(int(lstmin/10), int(lstmax/10)))
-        if res[0, 0, :].min() < resmin:
-            resmin = res[0, 0, :].min()
+            plt.xlabel('LST')
+            plt.ylabel('RMS')
+        rms = sliding_binLST(f_in, temp, bw, model=model, band=band, Nfg=Nfg)
+        plt.plot(lst, rms, label='Bin width = {:d} hrs'.format(int(bw/10)))
     plt.legend()
-    plt.title('LST averaged spectra using bins of width {:d} hr'.format(int(width/10)))
-    plt.xlabel(r'$\nu$ [MHz]')
-    plt.ylabel('Residuals [K]')
-    plt.ylim(ylim)
-    bbd = {}
-    bbd['facecolor'] = 'wheat'
-    bbd['alpha'] = 0.7
-    if textloc:
-        xtext, ytext = textloc
-    else:
-        xtext = fhigh - 0.5 * (fhigh-flow)
-        ytext = resmin
-    plt.text(x=xtext, y=ytext, s=rms_str, bbox=bbd)
-    if savepath:
-        sp = 'plots/' + savepath
-        plt.savefig(sp)
-    return None
+    if ylim:
+        plt.ylim(ylim)
+    plt.show()    
 
 def add_Gaussian(f, t, l, width, amplitude, centre=75):
     M = 149 # number of points, the gaussian will be centred at the middle
