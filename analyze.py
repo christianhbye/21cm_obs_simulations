@@ -307,6 +307,19 @@ def sliding_binLST(f_in, temp, bin_width, model='LINLOG', band='low', Nfg=5):
         rms_vals[i] = rms[0, 0]
     return rms_vals
 
+def get_smallestLST(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5):
+    smallest_rms = 1000 # initialize with some large value
+    lst_start = 0
+    bin_width_min = 0
+    for i, bw in enumerate(bin_widths):
+        rms = sliding_binLST(f_in, temp, bw, model=model, band=band, Nfg=Nfg)
+        if np.min(rms) < smallest_rms:
+            ind = np.argmin(rms)
+            smallest_rms = np.min(rms)
+            lst_start = lst[ind]
+            bin_width_min = bw
+    return ind, lst_start, bin_width_min, smallest_rms
+
 def plot_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5, split=None, ylim=None):
     plt.figure()
     plt.xlabel('LST')
@@ -357,50 +370,25 @@ def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=75, model='LINLOG', N
                 rms_g = compute_rms(f, tg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
             else:
                 rms_g = compute_rms(f, tg[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
-            rms_g_arr[i, j] = rms_g[0, 0]
+            rms_g_arr[-(i+1), j] = rms_g[0, 0]
     plt.figure()
-    right, left = amplitude_arr.max(), amplitude_arr.min()
-    bottom, top = width_arr.max(), width_arr.min()
+    right, left = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
+    top, bottom = width_arr.max(), width_arr.min()
     if not log10:
         plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top])
     else:
         plt.imshow(np.log10(rms_g_arr/rms_ref), aspect='auto', extent=[left, right, bottom, top])
-    plt.ylabel('Width [MHz]')
-    plt.xlabel('Amplitude [K]')
+    plt.ylabel('FWHM [MHz]')
+    plt.xlabel('A [mK]')
     plt.title('RMS(Amplitude, Width) / RMS(No Gaussian)')
     cbar = plt.colorbar()
     if not log10:
-        cbarlabel = 'RMS/({:.2g} K)'.format(rms_ref)
+        cbarlabel = 'RMS/({:.2g} mK)'.format(1000*rms_ref)
     else:
-        cbarlabel = 'log10(RMS/({:.2g} K))'.format(rms_ref)
+        cbarlabel = 'log10(RMS/({:.2g} mK))'.format(1000*rms_ref)
     cbar.set_label(cbarlabel)
     if clim:
         plt.clim(*clim)
-
-
-def get_best_LST_combination(loc, ground_plane, simulation, azimuth=0, model_type='LINLOG', Nfg=[5], flow=50, fhigh=100):
-    f, t, l = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation)
-    rms_min = 1e6 # just some really large number that makes the first rms less than this
-    lstc_min = []
-    res_min = []
-    for i in range(1, len(l)+1): ## loop through all possible lengths
-        print(i)
-        combinations = itertools.combinations(l, i)
-        for lstc in combinations: ## single combination of lst hrs
-            indices = []
-            for lstci in lstc:
-                indices.append(np.argwhere(l == lstci)[0])
-            t2 = t[indices, :]
-            t_avg = np.mean(t2, axis=0)
-            rms, res = compute_rms(f, t_avg, flow=flow, fhigh=fhigh, Nfg_array=Nfg, model_type=model_type)
-            if rms < rms_min:
-                rms_min = rms
-                res_min = res
-                lstc_min = lstc
-    return lstc_min, res_min, rms_min
-
-
-
 
 def save_all_plots(loc='mars', ground_plane=True, simulation='edges_hb'):
 #    azimuths = [0, 30, 60, 90, 120, 150]
