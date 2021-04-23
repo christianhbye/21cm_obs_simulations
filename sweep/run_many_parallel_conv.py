@@ -9,12 +9,10 @@ map_file = '../no_git_files/haslam408_ds_Remazeilles2014.fits'
 galactic_coord_file = '../no_git_files/pixel_coords_map_ring_galactic_res9.fits'
 
 antenna = 'bd'
-ground_plane = False
+ground_plane = True
 loc = 'sweep'
-lat_sweep = int(sys.argv[1]) * 1.5
-if lat_sweep >= 90: # > gives -88.5 to 90, >= gives -90 to 88.5
-    lat_sweep -= 180
-simulation = 'FEKO'
+lat_sweep = int(sys.argv[1]) * 1.5 - 90
+simulation = 'EDGES_lowband'
 lowband = True
 
 if not ground_plane:
