@@ -340,6 +340,27 @@ def plot_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5,
         plt.ylim(ylim)
     plt.show()    
 
+def plot2D_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5, split=None, ylim=None):
+#    rms_arr = np.empty((len(bin_widths), len(lst)))
+    rms_arr = np.empty((len(lst), len(lst)))
+  #  rms_arr[:, :] = np.nan
+  #  for i, bw in enumerate(bin_widths):
+  #      rms = sliding_binLST(f_in, temp, bw, model=model, band=band, Nfg=Nfg)
+  #     # rms_arr[i, :] = rms
+  #      rms_arr[bw-1, :] = rms
+    for i in range(len(lst)):
+        if i+1 in bin_widths: 
+            rms = sliding_binLST(f_in, temp, i+1, model=model, band=band, Nfg=Nfg)
+            rms_arr[i, :] = rms
+        else:
+            rms_arr[i, :] = -10
+    plt.figure()
+    plt.xlabel('LST')
+    plt.ylabel('Bin Width')
+    plt.yticks()
+    plt.xticks([0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240], ['0', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20', '22', '24'])
+    plt.imshow(rms_arr, aspect='auto')
+
 def add_Gaussian(f, t, l, width, amplitude, centre=75):
     M = 149 # number of points, the gaussian will be centred at the middle
     sigma = width
