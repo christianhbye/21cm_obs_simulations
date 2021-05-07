@@ -52,11 +52,14 @@ def plot(ground_plane, simulation, azimuth=0, lat_min=-90, lat_max=90, lat_res=1
 #    plt.imshow(rms_arr, aspect='auto')
 #    plt.colorbar(label='T [K]')
     plt.figure()
-    plt.imshow(1000 * new_rms_arr, aspect='auto') # *1000 to get mK
-    locs = [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240]
-    labso = [120, 100, 80, 60, 40, 20, 0, 220, 200, 180, 160, 140, 120]
-    labs = [int(l/10) for l in labso]
-    plt.xticks(locs, labs)
+    if lat_min != -90 or lat_max != 90:
+        plt.imshow(1000 * new_rms_arr, aspect='auto', extent=earr) # *1000 to get mK
+    else:
+        plt.imshow(1000 * new_rms_arr, aspect='auto') # *1000 to get mK
+        locs = [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240]
+        labso = [120, 100, 80, 60, 40, 20, 0, 220, 200, 180, 160, 140, 120]
+        labs = [int(l/10) for l in labso]
+        plt.xticks(locs, labs)
 #    ylocs = [0, 10, 20, 30] 
 #    ylabs = [45, 30, 15, 0]
     ## more general
@@ -64,14 +67,14 @@ def plot(ground_plane, simulation, azimuth=0, lat_min=-90, lat_max=90, lat_res=1
   #  deltay = int((N_lat-1)/(Nticks-1))
   #  deltay = 10
   #  Nticks = 19
-    ylocs = np.arange(19) * 10/1.5
-    ylabs = []
-    for i in range(19):
-       label = 90 - 10*i
-       ylabs.append(label)
+        ylocs = np.arange(19) * 10/1.5
+        ylabs = []
+        for i in range(19):
+           label = 90 - 10*i
+           ylabs.append(label)
 #    ylabs = lat_array[ylocs]
-    plt.yticks(ylocs, ylabs)
-    plt.colorbar(label='T [mK]')
+        plt.yticks(ylocs, ylabs)
+    plt.colorbar(label='RMS [mK]')
     plt.xlabel('LST [hr]')
     plt.ylabel('Latitude [deg]')
     plt.grid(linestyle='--')
