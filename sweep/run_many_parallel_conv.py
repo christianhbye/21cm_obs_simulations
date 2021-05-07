@@ -12,8 +12,8 @@ antenna = 'bd'
 ground_plane = True
 loc = 'sweep'
 lat_sweep = int(sys.argv[1]) * 1.5 - 90
-simulation = 'EDGES_lowband'
-lowband = True
+simulation = 'EDGES_highband'
+lowband = False
 
 if not ground_plane:
     beam_file = '../no_git_files/blade_dipole.out'
