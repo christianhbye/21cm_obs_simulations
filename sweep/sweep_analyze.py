@@ -32,7 +32,7 @@ def rands_nd(array, axis):
         new = array[:, idx]
     return new
 
-def plot(ground_plane, simulation, azimuth=0, lat_min=-90, lat_max=90, lat_res=1.5, model='LINLOG', Nfg=5, clim=None, save=False):
+def plot(ground_plane, simulation, azimuth=0, lat_min=-90, lat_max=90, lat_res=1.5, model='LINLOG', Nfg=5, rands_lst=True, clim=None, save=False):
     N_lat = int((lat_max - lat_min)/lat_res) + 1
     lat_array = np.linspace(lat_max, lat_min, N_lat)
     qwefr, fwefr, lst = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat_array[0], ground_plane=ground_plane, simulation=simulation)
@@ -41,38 +41,34 @@ def plot(ground_plane, simulation, azimuth=0, lat_min=-90, lat_max=90, lat_res=1
     for lat in it:
         f, t, l = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat, ground_plane=ground_plane, simulation=simulation)
         assert l.all() == lst.all()
-        flow = 50
-        fhigh = 100
+        if simulation == 'edges_hb':
+            flow = 100
+            fhigh = 190
+        elif simulation == 'edges_lb' or simulation == 'FEKO':
+            flow = 50
+            fhigh = 100
         rms = a.compute_rms(f, t, flow, fhigh, Nfg_array=[Nfg], model_type=model)[0]
         rms_arr[it.index, :] = rms[:, 0]
     # put lst=0 in the middle
-    new_rms_arr = rands_nd(rms_arr, 1)
-    earr = [lst.min(), lst.max(), lat_min, lat_max]
-#    plt.figure()
-#    plt.imshow(rms_arr, aspect='auto')
-#    plt.colorbar(label='T [K]')
-    plt.figure()
-    if lat_min != -90 or lat_max != 90:
-        plt.imshow(1000 * new_rms_arr, aspect='auto', extent=earr) # *1000 to get mK
-    else:
-        plt.imshow(1000 * new_rms_arr, aspect='auto') # *1000 to get mK
+    if rands_lst:
+        new_rms_arr = rands_nd(rms_arr, 1)
         locs = [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240]
         labso = [120, 100, 80, 60, 40, 20, 0, 220, 200, 180, 160, 140, 120]
         labs = [int(l/10) for l in labso]
         plt.xticks(locs, labs)
-#    ylocs = [0, 10, 20, 30] 
-#    ylabs = [45, 30, 15, 0]
-    ## more general
-  #  Nticks = 19
-  #  deltay = int((N_lat-1)/(Nticks-1))
-  #  deltay = 10
-  #  Nticks = 19
+    else:
+        new_rms_arr = rms_arr.copy()
+    plt.figure()
+    if lat_min != -90 or lat_max != 90:
+        earr = [lst.min(), lst.max(), lat_min, lat_max]
+        plt.imshow(1000 * new_rms_arr, aspect='auto', extent=earr) # *1000 to get mK
+    else:
+        plt.imshow(1000 * new_rms_arr, aspect='auto') # *1000 to get mK
         ylocs = np.arange(19) * 10/1.5
         ylabs = []
         for i in range(19):
            label = 90 - 10*i
            ylabs.append(label)
-#    ylabs = lat_array[ylocs]
         plt.yticks(ylocs, ylabs)
     plt.colorbar(label='RMS [mK]')
     plt.xlabel('LST [hr]')
