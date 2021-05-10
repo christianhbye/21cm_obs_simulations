@@ -294,8 +294,8 @@ def sliding_binLST(f_in, temp, bin_width, model='LINLOG', band='low', Nfg=5):
         flow = 50
         fhigh = 100
     elif band == 'high':
-        flow = 90
-        fhigh = 200
+        flow = 100
+        fhigh = 190
     f = f_in[(f_in >= flow) & (f_in <= fhigh)]
     temp = temp[:, (f_in >= flow) & (f_in <= fhigh)]
     t_avg_arr = np.empty(temp.shape)
