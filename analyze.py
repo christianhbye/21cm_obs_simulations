@@ -376,6 +376,22 @@ def add_Gaussian(f, t, l, width, amplitude, centre=75):
         newt[lstpoint, :] += g_slice
     return newt
 
+def add_EDGESsignal(f, t, l, tau, amplitude):
+    centre = 78
+    width = 19 # FWHM
+    B = 4 * (f-centre)**2 / width**2
+    B *= np.log(-1/tau * np.log((1+np.exp(-tau))/2))
+    signal = 1 - np.exp(-tau * np.exp(B))
+    signal /= 1 - np.exp(-tau)
+    signal *= amplitude
+    newt = t.copy()
+    if len(newt.shape) == 1:
+        newt += signal
+    else:
+        lstpoint = int(10*l)
+        newt[lstpoint, :] += signal
+    return newt
+
 def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=75, model='LINLOG', Nfg=5, flow=50, fhigh=100, clim=None, log10=False):
     lstpoint = int(10 * l)
     if len(t.shape) == 1:
@@ -409,6 +425,42 @@ def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=75, model='LINLOG', N
     cbar.set_label(cbarlabel)
     if clim:
         plt.clim(*clim)
+
+def EDGES_rms(f, t, l, tau_arr, amplitude_arr, model='LINLOG', Nfg=5, flow=50, fhigh=100, clim=None, log10=False):
+    lstpoint = int(10 * l)
+    if len(t.shape) == 1:
+        rms_ref = compute_rms(f, t, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0][0, 0]
+    else:
+        rms_ref = compute_rms(f, t[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0][0, 0]
+    rms_g_arr = np.empty((len(tau_arr), len(amplitude_arr)))
+    for i, tau in enumerate(tau_arr):
+        for j, a in enumerate(amplitude_arr):
+            tg = add_EDGESsignal(f, t, l, tau, a)
+            if len(tg.shape) == 1:
+                rms_g = compute_rms(f, tg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
+            else:
+                rms_g = compute_rms(f, tg[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
+            rms_g_arr[-(i+1), j] = rms_g[0, 0]
+    plt.figure()
+    right, left = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
+    top, bottom = tau_arr.max(), tau_arr.min()
+    if not log10:
+        plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top])
+    else:
+        plt.imshow(np.log10(rms_g_arr/rms_ref), aspect='auto', extent=[left, right, bottom, top])
+    plt.ylabel(r'$\tau$')
+    plt.xlabel('A [mK]')
+    plt.title(r'RMS(Amplitude, $\tau$) / RMS(No Signal)')
+    cbar = plt.colorbar()
+    if not log10:
+        cbarlabel = 'RMS/({:.2g} mK)'.format(1000*rms_ref)
+    else:
+        cbarlabel = 'log10(RMS/({:.2g} mK))'.format(1000*rms_ref)
+    cbar.set_label(cbarlabel)
+    if clim:
+        plt.clim(*clim)
+
+
 
 def save_all_plots(loc='mars', ground_plane=True, simulation='edges_hb'):
 #    azimuths = [0, 30, 60, 90, 120, 150]
