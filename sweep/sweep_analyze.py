@@ -32,9 +32,9 @@ def rands_nd(array, axis):
         new = array[:, idx]
     return new
 
-def plot(ground_plane, simulation, azimuth=0, lat_min=-90, lat_max=90, lat_res=1.5, model='LINLOG', Nfg=5, rands_lst=True, clim=None, save=False):
-    N_lat = int((lat_max - lat_min)/lat_res) + 1
-    lat_array = np.linspace(lat_max, lat_min, N_lat)
+def rms_sweep(ground_plane, simulation, azimuth=0, model='LINLOG', Nfg=5):
+    N_lat = 121
+    lat_array = np.linspace(90, -90, N_lat) # 121 latitudes gives 1.5 deg resolution
     qwefr, fwefr, lst = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat_array[0], ground_plane=ground_plane, simulation=simulation)
     rms_arr = np.empty((N_lat, len(lst)))
     it = np.nditer(lat_array, flags=['f_index'])
@@ -49,6 +49,12 @@ def plot(ground_plane, simulation, azimuth=0, lat_min=-90, lat_max=90, lat_res=1
             fhigh = 100
         rms = a.compute_rms(f, t, flow, fhigh, Nfg_array=[Nfg], model_type=model)[0]
         rms_arr[it.index, :] = rms[:, 0]
+    return rms_arr
+
+
+def plot(rms_arr, lst, azimuth, rands_lst=True, clim=None, hidex=False, hidey=False, cbar=True, save=False):
+    lat_min, lat_max = -90, 90
+    plt.figure()
     # put lst=0 in the middle
     if rands_lst:
         new_rms_arr = rands_nd(rms_arr, 1)
@@ -58,7 +64,6 @@ def plot(ground_plane, simulation, azimuth=0, lat_min=-90, lat_max=90, lat_res=1
         plt.xticks(locs, labs)
     else:
         new_rms_arr = rms_arr.copy()
-    plt.figure()
     if lat_min != -90 or lat_max != 90:
         earr = [lst.min(), lst.max(), lat_min, lat_max]
         plt.imshow(1000 * new_rms_arr, aspect='auto', extent=earr) # *1000 to get mK
@@ -70,14 +75,51 @@ def plot(ground_plane, simulation, azimuth=0, lat_min=-90, lat_max=90, lat_res=1
            label = 90 - 10*i
            ylabs.append(label)
         plt.yticks(ylocs, ylabs)
-    plt.colorbar(label='RMS [mK]')
-    plt.xlabel('LST [hr]')
-    plt.ylabel('Latitude [deg]')
+    if cbar:
+        plt.colorbar(label='RMS [mK]')
+    if not hidex:
+        plt.xlabel('LST [hr]')
+    else:
+        plt.xlabel('')
+        plt.xticks(locs, ['']*len(locs))
+    if not hidey:
+        plt.ylabel('Latitude [deg]')
+    else:
+        plt.ylabel('')
+        plt.yticks(ylocs, ['']*len(ylocs))
     plt.grid(linestyle='--')
-    plt.title(r'$\psi_0={}$ deg'.format(azimuth))
+    plt.text(17, 17, r'$\psi_0={}$ deg'.format(azimuth), color='white', size=16)
     if clim is not None:
         plt.clim(clim)
     if save:
         plt.savefig('plots/' + model + '_' + str(azimuth) + '.svg')
     
+
+def subplot(rms_arr_list, azlist, nrows=3, ncols=2):
+    """
+    rms_arr_list is a list of rms_arr st [0] goes in the first subplot etc
+    """
+    Nplots = nrows * ncols
+    fig, axs = plt.subplots(figsize=(10, 15), nrows=nrows, ncols=ncols, sharex=True, sharey=True)
+    imgs = []
+    for i, ax in enumerate(axs.flat):
+        new_rms_arr = rands_nd(rms_arr_list[i], 1)
+        im = ax.imshow(new_rms_arr * 1000, aspect='auto')
+        imgs.append(im) 
+        ax.grid(linestyle='--')
+        ax.set_title(r'$\psi_0={}$ deg'.format(azlist[i]))
+        if (i+1) % ncols == 0:
+            fig.colorbar(imgs[i], ax=axs[int((i+1)/ncols)-1, :], shrink=0.8, label='RMS [mK]')
+    locs = [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240]
+    labso = [120, 100, 80, 60, 40, 20, 0, 220, 200, 180, 160, 140, 120]
+    labs = [int(l/10) for l in labso]
+    plt.xticks(locs, labs)
+    plt.xlabel('LST [hr]')
+    plt.ylabel('Latitude [deg]')
+    ylocs = np.arange(19) * 10/1.5
+    ylabs = []
+    for i in range(19):
+        label = 90 - 10*i
+        ylabs.append(label)
+    plt.yticks(ylocs, ylabs)
 
