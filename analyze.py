@@ -287,7 +287,13 @@ def sliding_average(array, window_length, cycle=True):
         new_arr = np.copy(array)
     avg = np.convolve(new_arr, np.ones(window_length)/window_length, mode='valid')
     return avg
-        
+
+def sliding_average2d(temp, bin_width):
+    t_avg_arr = np.empty(temp.shape)
+    for i in range(temp.shape[1]):
+        t_avg_arr[:, i] = sliding_average(temp[:, i], bin_width)
+    return t_avg_arr
+
 
 def sliding_binLST(f_in, temp, bin_width, model='LINLOG', band='low', Nfg=5):
     if band == 'low':
@@ -298,9 +304,7 @@ def sliding_binLST(f_in, temp, bin_width, model='LINLOG', band='low', Nfg=5):
         fhigh = 190
     f = f_in[(f_in >= flow) & (f_in <= fhigh)]
     temp = temp[:, (f_in >= flow) & (f_in <= fhigh)]
-    t_avg_arr = np.empty(temp.shape)
-    for i in range(temp.shape[1]):
-        t_avg_arr[:, i] = sliding_average(temp[:, i], bin_width)
+    t_avg_arr = sliding_average2d(temp, bin_width)
     rms_vals = np.empty(temp.shape[0])
     for i, t_avg in enumerate(t_avg_arr):
         rms, res = compute_rms(f, t_avg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])
@@ -318,7 +322,7 @@ def get_smallestLST(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg
             smallest_rms = np.min(rms)
 #            lst_start = lst[ind]
             bin_width_min = bw
-    return ind, bin_width_min
+    return ind, bin_width_min, smallest_rms
 
 def plot_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5, split=None, ylim=None):
     plt.figure()
@@ -340,29 +344,21 @@ def plot_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5,
         plt.ylim(ylim)
     plt.show()    
 
-def plot2D_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5, split=None, ylim=None):
+def plot2D_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5, clim=None):
     rms_arr = np.empty((len(bin_widths), len(lst)))
-    rms_arr = np.empty((len(lst), len(lst)))
-  #  rms_arr[:, :] = np.nan
     for i, bw in enumerate(bin_widths):
         rms = sliding_binLST(f_in, temp, bw, model=model, band=band, Nfg=Nfg)
-  #     # rms_arr[i, :] = rms
-        rms_arr[bw-1, :] = rms
-  #  for i in range(len(lst)):
-  #      if i+1 in bin_widths: 
-  #          rms = sliding_binLST(f_in, temp, i+1, model=model, band=band, Nfg=Nfg)
-  #          rms_arr[i, :] = rms
-  #      else:
-  #          rms_arr[i, :] = -10
-#    masked_array = np.ma.array(rms_arr, mask=np.isnan(rms_arr))
-#    current_cmap = matplotlib.cm.get_cmap()
-#    current_cmap.set_bad(color='white')
+        rms_arr[i, :] = rms * 1000
     plt.figure()
-    plt.xlabel('LST')
-    plt.ylabel('Bin Width')
-    plt.yticks()
-  #  plt.xticks([0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240], ['0', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20', '22', '24'])
+    plt.xlabel('LST [hr]')
+    plt.ylabel('Bin Width [hr]')
+    plt.yticks([0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5], ['1', '2', '3', '4', '6', '8', '12', '24'])
+    plt.xticks([0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240], ['0', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20', '22', '24'])
     plt.imshow(rms_arr, aspect='auto')
+    plt.colorbar(label='RMS [mK]')
+    if clim:
+       plt.clim(clim)
+    plt.grid()
 
 def add_Gaussian(f, t, l, width, amplitude, centre=75):
     M = 149 # number of points, the gaussian will be centred at the middle
