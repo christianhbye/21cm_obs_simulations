@@ -344,21 +344,28 @@ def plot_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5,
         plt.ylim(ylim)
     plt.show()    
 
-def plot2D_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5, clim=None):
-    rms_arr = np.empty((len(bin_widths), len(lst)))
+def plot2D_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5, vmin=0, vmax=None):
+    rms_arr = np.empty((len(bin_widths)+1, len(lst)))
+    if band == 'low':
+        flow = 40
+        fhigh = 120
+    elif band == 'high':
+        flow = 100
+        fhigh = 190
+    rms0 = compute_rms(f_in, temp, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
+    rms_arr[0, :] = 1000 * rms0[:, 0]
     for i, bw in enumerate(bin_widths):
         rms = sliding_binLST(f_in, temp, bw, model=model, band=band, Nfg=Nfg)
-        rms_arr[i, :] = rms * 1000
+        rms_arr[i+1, :] = rms * 1000
     plt.figure()
     plt.xlabel('LST [hr]')
     plt.ylabel('Bin Width [hr]')
-    plt.yticks([0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5], ['1', '2', '3', '4', '6', '8', '12', '24'])
+    plt.yticks([0., 1., 2., 3., 4., 5., 6., 7., 8.], ['0', '1', '2', '3', '4', '6', '8', '12', '24'])
     plt.xticks([0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240], ['0', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20', '22', '24'])
-    plt.imshow(rms_arr, aspect='auto')
+    plt.imshow(rms_arr, aspect='auto', interpolation='none')
     plt.colorbar(label='RMS [mK]')
-    if clim:
-       plt.clim(clim)
-    plt.grid()
+    plt.clim(vmin=vmin, vmax=vmax)
+    plt.grid(which='minor')
 
 def add_Gaussian(f, t, l, width, amplitude, centre=75):
     M = 149 # number of points, the gaussian will be centred at the middle
