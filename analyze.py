@@ -173,7 +173,7 @@ def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_norma
             rms_values[i, j] = rms
     return rms_values, residuals
 
-def plot_rms(f, t, lst, flow=50, fhigh=100, Nfg_array=[1, 2, 3, 4, 5, 6], Nfg_split=3, save=False, loc='mars', ground_plane=True, simulation='edges_hb', frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='LINLOG'):
+def plot_rms(f, t, lst, flow=40, fhigh=120, Nfg_array=[1, 2, 3, 4, 5, 6], Nfg_split=3, save=False, loc='mars', ground_plane=True, simulation='edges_hb', frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='LINLOG'):
     if type(psi) == int:
         f, t, lst = get_ftl(psi, loc=loc, ground_plane=ground_plane, simulation=simulation)
     rms_values = compute_rms(f, t, flow=flow, fhigh=fhigh, frequency_normalization=frequency_normalization, noise_normalization=noise_normalization, noise=noise, model_type=model_type)[0]
@@ -216,7 +216,7 @@ def plot_rms(f, t, lst, flow=50, fhigh=100, Nfg_array=[1, 2, 3, 4, 5, 6], Nfg_sp
         plt.show()
 
 
-def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_plane=True, simulation='edges_hb', flow=50, fhigh=100, model_type='LINLOG', Nfg=5, save=False):
+def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_plane=True, simulation='edges_hb', flow=40, fhigh=120, model_type='LINLOG', Nfg=5, save=False):
     f, l = get_ftl(0, loc=loc, ground_plane=ground_plane, simulation=simulation, return_t=False)
     if f[0] >= 100: ## high band
         flow = 100
@@ -249,7 +249,7 @@ def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_p
         plt.savefig('plots/' + gpath + loc +'/rms_plots/rms_comparison')
     plt.show()
 
-def plot_residuals(f, t, l, azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=50, fhigh=100, Nfg_array=[5, 6], model_type='LINLOG', savepath=None, ylim=None, textloc=None):
+def plot_residuals(f, t, l, azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=40, fhigh=120, Nfg_array=[5, 6], model_type='LINLOG', savepath=None, ylim=None, textloc=None):
     # plots for five-term fit and six-term fit
     rms, res = compute_rms(f, t, flow=flow, fhigh=fhigh, Nfg_array=Nfg_array, model_type=model_type)
     f = f[(f >= flow) & (f <= fhigh)]
@@ -297,8 +297,8 @@ def sliding_average2d(temp, bin_width):
 
 def sliding_binLST(f_in, temp, bin_width, model='LINLOG', band='low', Nfg=5):
     if band == 'low':
-        flow = 50
-        fhigh = 100
+        flow = 40
+        fhigh = 120
     elif band == 'high':
         flow = 100
         fhigh = 190
@@ -392,7 +392,7 @@ def add_EDGESsignal(f, t, l, tau, amplitude):
         newt[lstpoint, :] += signal
     return newt
 
-def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=75, model='LINLOG', Nfg=5, flow=50, fhigh=100, clim=None, log10=False):
+def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=80, model='LINLOG', Nfg=5, flow=40, fhigh=120, clim=None, log10=False):
     lstpoint = int(10 * l)
     if len(t.shape) == 1:
         rms_ref = compute_rms(f, t, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0][0, 0]
@@ -426,7 +426,7 @@ def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=75, model='LINLOG', N
     if clim:
         plt.clim(*clim)
 
-def EDGES_rms(f, t, l, tau_arr, amplitude_arr, model='LINLOG', Nfg=5, flow=50, fhigh=100, clim=None, log10=False):
+def EDGES_rms(f, t, l, tau_arr, amplitude_arr, model='LINLOG', Nfg=5, flow=40, fhigh=120, clim=None, log10=False):
     lstpoint = int(10 * l)
     if len(t.shape) == 1:
         rms_ref = compute_rms(f, t, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0][0, 0]
