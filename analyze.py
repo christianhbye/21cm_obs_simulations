@@ -4,6 +4,7 @@ from scipy.signal.windows import gaussian
 import os
 import general as gen
 import matplotlib.pyplot as plt
+import matplotlib.colors as mpcolors
 
 def read_hdf5(azimuth, varname, loc, sweep_lat=None, ground_plane=True, simulation='edges_hb'):
     parent_path = '/scratch/s/sievers/cbye/21cm_obs_simulations/'
@@ -324,6 +325,12 @@ def get_smallestLST(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg
             bin_width_min = bw
     return ind, bin_width_min, smallest_rms
 
+def smallestLSTavg(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5):
+    ind, bwmin, __ = get_smallestLST(f_in, temp, lst, bin_widths, model=model, band=band, Nfg=Nfg)
+    tavg = sliding_average2d(temp, bwmin)
+    newt = tavg[ind, :]
+    return newt
+
 def plot_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5, split=None, ylim=None):
     plt.figure()
     plt.xlabel('LST')
@@ -367,13 +374,15 @@ def plot2D_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=
     plt.clim(vmin=vmin, vmax=vmax)
     plt.grid(which='minor')
 
-def add_Gaussian(f, t, l, width, amplitude, centre=75):
-    M = 149 # number of points, the gaussian will be centred at the middle
+def add_Gaussian(f, t, l, width, amplitude, centre=80):
+    if width == 0 or amplitude == 0:
+        return t.copy()
+    M = 2*centre-1 # number of points, the gaussian will be centred at the middle
     sigma = width
     sigma /= 2 * np.sqrt(2 * np.log(2))
-    g = gaussian(M, std=width)
+    g = gaussian(M, std=sigma)
     g *= amplitude
-    find = [int(freq) for freq in f]
+    find = [int(freq) for freq in f] # frequency indices
     g_slice = g[find]
     newt = t.copy()
     if len(newt.shape) == 1:
@@ -386,6 +395,8 @@ def add_Gaussian(f, t, l, width, amplitude, centre=75):
 def add_EDGESsignal(f, t, l, tau, amplitude):
     centre = 78
     width = 19 # FWHM
+    if tau == 0:
+        return add_Gaussian(f, t, l, 19, amplitude, centre=78)
     B = 4 * (f-centre)**2 / width**2
     B *= np.log(-1/tau * np.log((1+np.exp(-tau))/2))
     signal = 1 - np.exp(-tau * np.exp(B))
@@ -399,7 +410,7 @@ def add_EDGESsignal(f, t, l, tau, amplitude):
         newt[lstpoint, :] += signal
     return newt
 
-def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=80, model='LINLOG', Nfg=5, flow=40, fhigh=120, clim=None, log10=False):
+def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=80, model='LINLOG', Nfg=5, flow=40, fhigh=120, vmin=0, vmax=None, log10=False):
     lstpoint = int(10 * l)
     if len(t.shape) == 1:
         rms_ref = compute_rms(f, t, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0][0, 0]
@@ -413,27 +424,27 @@ def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=80, model='LINLOG', N
                 rms_g = compute_rms(f, tg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
             else:
                 rms_g = compute_rms(f, tg[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
-            rms_g_arr[-(i+1), j] = rms_g[0, 0]
+            rms_g_arr[-(i+1), -(j+1)] = rms_g[0, 0]
     plt.figure()
-    right, left = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
+    left, right = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
     top, bottom = width_arr.max(), width_arr.min()
+#    if log10:
+#        norm = mpcolors.LogNorm(vmin=1, vmax=np.max(rms_g_arr/rms_ref))
+#    else:
+#        norm = None
     if not log10:
-        plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top])
+        plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top], interpolation='none')
     else:
-        plt.imshow(np.log10(rms_g_arr/rms_ref), aspect='auto', extent=[left, right, bottom, top])
+        plt.imshow(np.log10(rms_g_arr/rms_ref), aspect='auto', extent=[left, right, bottom, top], interpolation='none')
     plt.ylabel('FWHM [MHz]')
     plt.xlabel('A [mK]')
     plt.title('RMS(Amplitude, Width) / RMS(No Gaussian)')
     cbar = plt.colorbar()
-    if not log10:
-        cbarlabel = 'RMS/({:.2g} mK)'.format(1000*rms_ref)
-    else:
-        cbarlabel = 'log10(RMS/({:.2g} mK))'.format(1000*rms_ref)
+    cbarlabel = 'RMS/({:.2g} mK)'.format(1000*rms_ref)
     cbar.set_label(cbarlabel)
-    if clim:
-        plt.clim(*clim)
+    plt.clim(vmin, vmax)
 
-def EDGES_rms(f, t, l, tau_arr, amplitude_arr, model='LINLOG', Nfg=5, flow=40, fhigh=120, clim=None, log10=False):
+def EDGES_rms(f, t, l, tau_arr, amplitude_arr, model='LINLOG', Nfg=5, flow=40, fhigh=120, vmin=0, vmax=None, log10=False):
     lstpoint = int(10 * l)
     if len(t.shape) == 1:
         rms_ref = compute_rms(f, t, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0][0, 0]
@@ -447,14 +458,11 @@ def EDGES_rms(f, t, l, tau_arr, amplitude_arr, model='LINLOG', Nfg=5, flow=40, f
                 rms_g = compute_rms(f, tg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
             else:
                 rms_g = compute_rms(f, tg[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
-            rms_g_arr[-(i+1), j] = rms_g[0, 0]
+            rms_g_arr[-(i+1), -(j+1)] = rms_g[0, 0]
     plt.figure()
-    right, left = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
+    left, right = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
     top, bottom = tau_arr.max(), tau_arr.min()
-    if not log10:
-        plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top])
-    else:
-        plt.imshow(np.log10(rms_g_arr/rms_ref), aspect='auto', extent=[left, right, bottom, top])
+    plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top], interpolation='none')
     plt.ylabel(r'$\tau$')
     plt.xlabel('A [mK]')
     plt.title(r'RMS(Amplitude, $\tau$) / RMS(No Signal)')
@@ -464,8 +472,7 @@ def EDGES_rms(f, t, l, tau_arr, amplitude_arr, model='LINLOG', Nfg=5, flow=40, f
     else:
         cbarlabel = 'log10(RMS/({:.2g} mK))'.format(1000*rms_ref)
     cbar.set_label(cbarlabel)
-    if clim:
-        plt.clim(*clim)
+    plt.clim(vmin, vmax)
 
 
 
