@@ -12,7 +12,7 @@ antenna = 'bd'
 ground_plane = False
 loc = 'sweep'
 lat_sweep = int(sys.argv[1]) * 1.5 - 90
-if int(sys.arv[1]) == 121:
+if int(sys.argv[1]) == 121:
     lat_sweep = 79.5 # cheap hack to also get MIST latitude
 simulation = 'new_MIST'
 lowband = True
