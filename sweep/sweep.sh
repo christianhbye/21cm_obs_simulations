@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --time=18:30:00
-#SBATCH --array=0-120:1
+#SBATCH --array=0-121:1
 #SBATCH --nodes=10
 #SBATCH --mail-user=<christian.bye@mail.mcgill.ca>
 #SBATCH --mail-type=ALL

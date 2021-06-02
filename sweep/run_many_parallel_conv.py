@@ -9,14 +9,19 @@ map_file = '../no_git_files/haslam408_ds_Remazeilles2014.fits'
 galactic_coord_file = '../no_git_files/pixel_coords_map_ring_galactic_res9.fits'
 
 antenna = 'bd'
-ground_plane = True
+ground_plane = False
 loc = 'sweep'
 lat_sweep = int(sys.argv[1]) * 1.5 - 90
-simulation = 'EDGES_highband'
-lowband = False
+if int(sys.arv[1]) == 121:
+    lat_sweep = 79.5 # cheap hack to also get MIST latitude
+simulation = 'new_MIST'
+lowband = True
 
 if not ground_plane:
-    beam_file = '../no_git_files/blade_dipole.out'
+    if simulation == 'new_MIST':
+        beam_file = '../no_git_files/blade_dipole_MARS.out'
+    elif simulation == 'old_MIST':
+        beam_file = '../no_git_files/blade_dipole.out'
 elif simulation == 'EDGES_highband':
     beam_file = '../no_git_files/EDGES_blade_high_band_infinite.out'
 elif simulation == 'EDGES_lowband':
@@ -29,7 +34,9 @@ if antenna == 'bd':
         s2 = simulation + '/'
         ss = s1 + s2
     else:
-        ss = 'no_ground_plane'
+        s1 = 'no_ground_plane/'
+        s2 = simulation = '/'
+        ss = s1 + s2
     path = fs + '/' + ss + '/sweep/lat_' + str(lat_sweep)
 
 save_folder = 'sky_models/' + path 
@@ -86,8 +93,8 @@ while i < N_angles:
             FLOW         = 40 
             FHIGH        = 120
         else:
-            FLOW = 90
-            FHIGH = 200
+            FLOW = 100
+            FHIGH = 190
         freq_array   = freq_array_X[(freq_array_X >= FLOW) & (freq_array_X <= FHIGH)]
         beam_all = beam_all_X[(freq_array_X >= FLOW) & (freq_array_X <= FHIGH), :, :]
         if beam_all.shape[-1] == 361:
