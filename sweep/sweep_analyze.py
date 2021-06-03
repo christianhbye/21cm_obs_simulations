@@ -35,7 +35,7 @@ def rands_nd(array, axis):
 def rms_sweep(ground_plane, simulation, azimuth=0, model='LINLOG', Nfg=5):
     N_lat = 121
     lat_array = np.linspace(90, -90, N_lat) # 121 latitudes gives 1.5 deg resolution
-    qwefr, fwefr, lst = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat_array[0], ground_plane=ground_plane, simulation=simulation)
+    __, __, lst = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat_array[0], ground_plane=ground_plane, simulation=simulation)
     rms_arr = np.empty((N_lat, len(lst)))
     it = np.nditer(lat_array, flags=['f_index'])
     for lat in it:
@@ -44,15 +44,15 @@ def rms_sweep(ground_plane, simulation, azimuth=0, model='LINLOG', Nfg=5):
         if simulation == 'edges_hb':
             flow = 100
             fhigh = 190
-        elif simulation == 'edges_lb' or simulation == 'FEKO':
-            flow = 50
-            fhigh = 100
+        else:
+            flow = 40
+            fhigh = 120
         rms = a.compute_rms(f, t, flow, fhigh, Nfg_array=[Nfg], model_type=model)[0]
         rms_arr[it.index, :] = rms[:, 0]
     return rms_arr
 
 
-def plot(rms_arr, lst, azimuth, rands_lst=True, clim=None, hidex=False, hidey=False, cbar=True, save=False):
+def plot(rms_arr, azimuth, lst=None, rands_lst=False, vmin=0, vmax=None, hidex=False, hidey=False, cbar=True, save=False):
     lat_min, lat_max = -90, 90
     plt.figure()
     # put lst=0 in the middle
@@ -63,6 +63,9 @@ def plot(rms_arr, lst, azimuth, rands_lst=True, clim=None, hidex=False, hidey=Fa
         labs = [int(l/10) for l in labso]
         plt.xticks(locs, labs)
     else:
+        labs = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]
+        locs = [10*l for l in labs]
+        plt.xticks(locs, labs) ## needds to change!!!
         new_rms_arr = rms_arr.copy()
     if lat_min != -90 or lat_max != 90:
         earr = [lst.min(), lst.max(), lat_min, lat_max]
@@ -89,8 +92,7 @@ def plot(rms_arr, lst, azimuth, rands_lst=True, clim=None, hidex=False, hidey=Fa
         plt.yticks(ylocs, ['']*len(ylocs))
     plt.grid(linestyle='--')
     plt.text(17, 17, r'$\psi_0={}$ deg'.format(azimuth), color='white', size=16)
-    if clim is not None:
-        plt.clim(clim)
+    plt.clim(vmin, vmax)
     if save:
         plt.savefig('plots/' + model + '_' + str(azimuth) + '.svg')
     

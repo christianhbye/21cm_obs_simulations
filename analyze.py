@@ -16,9 +16,10 @@ def read_hdf5(azimuth, varname, loc, sweep_lat=None, ground_plane=True, simulati
             g2 = 'EDGES_lowband/'
         elif simulation == 'FEKO':
             g2 = 'FEKO_simulation/' 
-        gpath = g1 + g2
     else:
-        gpath = 'no_ground_plane/'
+        g1 = 'no_ground_plane/'
+        g2 = simulation + '/'
+    gpath = g1 + g2
     if loc == 'sweep':
         path = 'sweep/sky_models/blade_dipole/' + gpath + 'sweep/lat_' + str(sweep_lat) + '/save_parallel_convolution_' + str(azimuth)
     else:
@@ -53,7 +54,7 @@ def get_ftl(azimuth, loc='mars', sweep_lat=None, ground_plane=False, simulation=
         print('Nothing returned! Change kwargs return_fl and and return_t!')
         return None
 
-def plot_beam(antenna_type, antenna_orientation, phi, gain, frequency, climbeam=None, climderiv=None, savepath=None):
+def plot_beam(antenna_name, antenna_orientation, phi, gain, frequency, climbeam=None, climderiv=None, savepath=None):
     if gain.shape[-1] == 361:
         gain = gain[:, :, :-1] # cut last angle since 0 = 360 degrees
     print('Min frequency = {}'.format(frequency.min()))
@@ -69,7 +70,7 @@ def plot_beam(antenna_type, antenna_orientation, phi, gain, frequency, climbeam=
     if climbeam:
         plt.clim(climbeam)
     plt.colorbar()
-    plt.title(r'Gain ($\phi = {}$, $\psi_0 = {}$)'.format(phi, antenna_orientation) +'\n' + antenna_type)
+    plt.title(r'Gain ($\phi = {}$, $\psi_0 = {}$)'.format(phi, antenna_orientation) +'\n' + antenna_name)
     plt.xlabel(r'$\theta$ [deg]')
     plt.ylabel(r'$\nu$ [MHz]')
     if savepath:
@@ -87,7 +88,7 @@ def plot_beam(antenna_type, antenna_orientation, phi, gain, frequency, climbeam=
     if climderiv:
         plt.clim(climderiv)
     plt.colorbar()
-    plt.title(r'Derivative ($\phi = {}$)'.format(phi) +'\n'+ beam_name)
+    plt.title(r'Derivative ($\phi = {}$)'.format(phi) +'\n'+ antenna_name)
     if savepath:
         sp = 'plots/' + savepath + '/deriv'
         plt.savefig(sp)
