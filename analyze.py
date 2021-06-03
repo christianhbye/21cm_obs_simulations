@@ -313,7 +313,7 @@ def sliding_binLST(f_in, temp, bin_width, model='LINLOG', band='low', Nfg=5):
         rms_vals[i] = rms[0, 0]
     return rms_vals
 
-def get_smallestLST(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5):
+def get_smallestLST(f_in, temp, lst, bin_widths=[10, 20, 30, 40, 60, 80, 120, 241], model='LINLOG', band='low', Nfg=5):
     smallest_rms = 1000 # initialize with some large value
     lst_start = 0
     bin_width_min = 0
@@ -326,8 +326,8 @@ def get_smallestLST(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg
             bin_width_min = bw
     return ind, bin_width_min, smallest_rms
 
-def smallestLSTavg(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5):
-    ind, bwmin, __ = get_smallestLST(f_in, temp, lst, bin_widths, model=model, band=band, Nfg=Nfg)
+def smallestLSTavg(f_in, temp, lst, bin_widths=[10, 20, 30, 40, 60, 80, 120, 241], model='LINLOG', band='low', Nfg=5):
+    ind, bwmin, __ = get_smallestLST(f_in, temp, lst, bin_widths=bin_widths, model=model, band=band, Nfg=Nfg)
     tavg = sliding_average2d(temp, bwmin)
     newt = tavg[ind, :]
     return newt
@@ -376,8 +376,10 @@ def plot2D_LSTbins(f_in, temp, lst, bin_widths=[10, 20, 30, 40, 60, 80, 120, 241
     plt.grid(which='minor')
 
 def add_Gaussian(f, t, l, width, amplitude, centre=80):
-    if width == 0 or amplitude == 0:
+    if amplitude == 0:
         return t.copy()
+    if width == 0:
+        return None
     M = 2*centre-1 # number of points, the gaussian will be centred at the middle
     sigma = width
     sigma /= 2 * np.sqrt(2 * np.log(2))
@@ -391,6 +393,23 @@ def add_Gaussian(f, t, l, width, amplitude, centre=80):
     else:
         lstpoint = int(10 * l)
         newt[lstpoint, :] += g_slice
+    return newt
+
+def nadd_Gaussian(f, t, width, amplitude, centre=80):
+    if width = 0:
+        return None
+    elif amplitude = 0:
+        return t.copy()
+    sigma = width / (2 * np.sqrt(2 * np.log(2)))
+    exponential = (x - centre) ** 2
+    exponential /= 2 * sigma **2
+    signal = amplitude * np.exp(-1 * exponential)
+    newt = t.copy()
+    if len(newt.shape) == 1:
+        newt += signal
+    else:
+        print('shucks, this part isn't done yet')
+        return None
     return newt
 
 def add_EDGESsignal(f, t, l, tau, amplitude):
@@ -420,11 +439,14 @@ def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=80, model='LINLOG', N
     rms_g_arr = np.empty((len(width_arr), len(amplitude_arr)))
     for i, w in enumerate(width_arr):
         for j, a in enumerate(amplitude_arr):
-            tg = add_Gaussian(f, t, l, w, a, centre=centre)
-            if len(tg.shape) == 1:
-                rms_g = compute_rms(f, tg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
+            if w == 0:
+                rms_g = np.array([[None]])
             else:
-                rms_g = compute_rms(f, tg[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
+                tg = add_Gaussian(f, t, l, w, a, centre=centre)
+                if len(tg.shape) == 1:
+                    rms_g = compute_rms(f, tg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
+                else:
+                    rms_g = compute_rms(f, tg[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
             rms_g_arr[-(i+1), -(j+1)] = rms_g[0, 0]
     plt.figure()
     left, right = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
