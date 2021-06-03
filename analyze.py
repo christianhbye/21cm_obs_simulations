@@ -416,7 +416,7 @@ def add_EDGESsignal(f, t, l, tau, amplitude):
     centre = 78
     width = 19 # FWHM
     if tau == 0:
-        return add_Gaussian(f, t, l, 19, amplitude, centre=78)
+        return nadd_Gaussian(f, t, 19, amplitude, centre=78)
     B = 4 * (f-centre)**2 / width**2
     B *= np.log(-1/tau * np.log((1+np.exp(-tau))/2))
     signal = 1 - np.exp(-tau * np.exp(B))
@@ -442,7 +442,8 @@ def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=80, model='LINLOG', N
             if w == 0:
                 rms_g = np.array([[None]])
             else:
-                tg = add_Gaussian(f, t, l, w, a, centre=centre)
+#                tg = add_Gaussian(f, t, l, w, a, centre=centre)
+                tg = nadd_Gaussian(f, t, w, a, centre=centre)
                 if len(tg.shape) == 1:
                     rms_g = compute_rms(f, tg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
                 else:
