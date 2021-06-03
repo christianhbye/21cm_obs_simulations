@@ -40,7 +40,7 @@ def read_hdf5(azimuth, varname, loc, sweep_lat=None, ground_plane=True, simulati
     else:
         return var_arr
 
-def get_ftl(azimuth, loc='mars', sweep_lat=None, ground_plane=False, simulation='FEKO', return_fl=True, return_t=True):
+def get_ftl(azimuth, loc='mars', sweep_lat=None, ground_plane=False, simulation='old_MIST', return_fl=True, return_t=True):
     f = read_hdf5(azimuth, 'freq_out', loc=loc, sweep_lat=sweep_lat, ground_plane=ground_plane, simulation=simulation)
     t = read_hdf5(azimuth, 'ant_temp_out', loc=loc, sweep_lat=sweep_lat, ground_plane=ground_plane, simulation=simulation)
     lst = read_hdf5(azimuth, 'LST_out', loc=loc, sweep_lat=sweep_lat, ground_plane=ground_plane, simulation=simulation)
@@ -352,7 +352,7 @@ def plot_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5,
         plt.ylim(ylim)
     plt.show()    
 
-def plot2D_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5, vmin=0, vmax=None):
+def plot2D_LSTbins(f_in, temp, lst, bin_widths=[10, 20, 30, 40, 60, 80, 120, 241], model='LINLOG', band='low', Nfg=5, vmin=0, vmax=None):
     rms_arr = np.empty((len(bin_widths)+1, len(lst)))
     if band == 'low':
         flow = 40
