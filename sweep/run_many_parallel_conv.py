@@ -12,8 +12,6 @@ antenna = 'bd'
 ground_plane = False
 loc = 'sweep'
 lat_sweep = int(sys.argv[1]) * 1.5 - 90
-if int(sys.argv[1]) == 121:
-    lat_sweep = 79.5 # cheap hack to also get MIST latitude
 simulation = 'new_MIST'
 lowband = True
 
@@ -31,11 +29,11 @@ if antenna == 'bd':
     fs = 'blade_dipole'
     if ground_plane:
         s1 = 'inf_metal_ground_plane/'
-        s2 = simulation + '/'
+        s2 = simulation
         ss = s1 + s2
     else:
         s1 = 'no_ground_plane/'
-        s2 = simulation = '/'
+        s2 = simulation
         ss = s1 + s2
     path = fs + '/' + ss + '/sweep/lat_' + str(lat_sweep)
 
