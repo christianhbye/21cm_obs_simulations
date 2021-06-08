@@ -1,6 +1,5 @@
 import h5py
 import numpy as np
-from scipy.signal.windows import gaussian
 import os
 import general as gen
 import matplotlib.pyplot as plt
@@ -375,79 +374,51 @@ def plot2D_LSTbins(f_in, temp, lst, bin_widths=[10, 20, 30, 40, 60, 80, 120, 241
     plt.clim(vmin=vmin, vmax=vmax)
     plt.grid(which='minor')
 
-def add_Gaussian(f, t, l, width, amplitude, centre=80):
-    if amplitude == 0:
-        return t.copy()
+def add_Gaussian(f, t, width, amplitude, centre=80):
     if width == 0:
         return None
-    M = 2*centre-1 # number of points, the gaussian will be centred at the middle
-    sigma = width
-    sigma /= 2 * np.sqrt(2 * np.log(2))
-    g = gaussian(M, std=sigma)
-    g *= amplitude
-    find = [int(freq) for freq in f] # frequency indices
-    g_slice = g[find]
-    newt = t.copy()
-    if len(newt.shape) == 1:
-        newt += g_slice
-    else:
-        lstpoint = int(10 * l)
-        newt[lstpoint, :] += g_slice
-    return newt
-
-def nadd_Gaussian(f, t, width, amplitude, centre=80):
-    if width = 0:
-        return None
-    elif amplitude = 0:
+    elif amplitude == 0:
         return t.copy()
     sigma = width / (2 * np.sqrt(2 * np.log(2)))
-    exponential = (x - centre) ** 2
+    exponential = (f - centre) ** 2
     exponential /= 2 * sigma **2
     signal = amplitude * np.exp(-1 * exponential)
     newt = t.copy()
     if len(newt.shape) == 1:
         newt += signal
     else:
-        print('shucks, this part isn't done yet')
+        print('shucks')
         return None
     return newt
 
-def add_EDGESsignal(f, t, l, tau, amplitude):
+def add_EDGESsignal(f, t, tau, amplitude):
     centre = 78
     width = 19 # FWHM
     if tau == 0:
-        return nadd_Gaussian(f, t, 19, amplitude, centre=78)
+        return add_Gaussian(f, t, 19, amplitude, centre=78)
     B = 4 * (f-centre)**2 / width**2
     B *= np.log(-1/tau * np.log((1+np.exp(-tau))/2))
     signal = 1 - np.exp(-tau * np.exp(B))
     signal /= 1 - np.exp(-tau)
     signal *= amplitude
     newt = t.copy()
-    if len(newt.shape) == 1:
-        newt += signal
-    else:
-        lstpoint = int(10*l)
-        newt[lstpoint, :] += signal
+    newt += signal
     return newt
 
-def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=80, model='LINLOG', Nfg=5, flow=40, fhigh=120, vmin=0, vmax=None, log10=False):
-    lstpoint = int(10 * l)
-    if len(t.shape) == 1:
-        rms_ref = compute_rms(f, t, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0][0, 0]
-    else:
-        rms_ref = compute_rms(f, t[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0][0, 0]
+def gaussian_rms(f, t, width_arr=None, amplitude_arr=None, centre=80, model='LINLOG', Nfg=5, flow=40, fhigh=120, vmin=0, vmax=None, log10=False):
+    if width_arr is None:
+        width_arr = np.linspace(0, 50, 201)
+    if amplitude_arr is None:
+        amplitude_arr = np.linspace(-1, 0, 201)
+    rms_ref = compute_rms(f, t, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0][0, 0]
     rms_g_arr = np.empty((len(width_arr), len(amplitude_arr)))
     for i, w in enumerate(width_arr):
         for j, a in enumerate(amplitude_arr):
             if w == 0:
                 rms_g = np.array([[None]])
             else:
-#                tg = add_Gaussian(f, t, l, w, a, centre=centre)
-                tg = nadd_Gaussian(f, t, w, a, centre=centre)
-                if len(tg.shape) == 1:
-                    rms_g = compute_rms(f, tg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
-                else:
-                    rms_g = compute_rms(f, tg[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
+                tg = add_Gaussian(f, t, w, a, centre=centre)
+                rms_g = compute_rms(f, tg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
             rms_g_arr[-(i+1), -(j+1)] = rms_g[0, 0]
     plt.figure()
     left, right = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
@@ -468,20 +439,17 @@ def gaussian_rms(f, t, l, width_arr, amplitude_arr, centre=80, model='LINLOG', N
     cbar.set_label(cbarlabel)
     plt.clim(vmin, vmax)
 
-def EDGES_rms(f, t, l, tau_arr, amplitude_arr, model='LINLOG', Nfg=5, flow=40, fhigh=120, vmin=0, vmax=None, log10=False):
-    lstpoint = int(10 * l)
-    if len(t.shape) == 1:
-        rms_ref = compute_rms(f, t, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0][0, 0]
-    else:
-        rms_ref = compute_rms(f, t[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0][0, 0]
+def EDGES_rms(f, t, tau_arr=None, amplitude_arr=None, model='LINLOG', Nfg=5, flow=40, fhigh=120, vmin=0, vmax=None, log10=False):
+    if tau_arr is None:
+        tau_arr = np.linspace(0, 30, 121)
+    if amplitude_arr is None:
+        amplitude_arr = np.linspace(-1, 0, 201)
+    rms_ref = compute_rms(f, t, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0][0, 0]
     rms_g_arr = np.empty((len(tau_arr), len(amplitude_arr)))
     for i, tau in enumerate(tau_arr):
         for j, a in enumerate(amplitude_arr):
-            tg = add_EDGESsignal(f, t, l, tau, a)
-            if len(tg.shape) == 1:
-                rms_g = compute_rms(f, tg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
-            else:
-                rms_g = compute_rms(f, tg[lstpoint, :], flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
+            tg = add_EDGESsignal(f, t, tau, a)
+            rms_g = compute_rms(f, tg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
             rms_g_arr[-(i+1), -(j+1)] = rms_g[0, 0]
     plt.figure()
     left, right = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
