@@ -11,7 +11,7 @@ galactic_coord_file = '../no_git_files/pixel_coords_map_ring_galactic_res9.fits'
 lowband = True
 loc = 'mars'
 beam_file = 'cond00' + str(sys.argv[1]) + '_perm45_sep20.out'
-print('beam_file')
+print(beam_file)
 
 map_orig, lon, lat = ast.map_remazeilles_408MHz(map_file, galactic_coord_file)
 
@@ -26,6 +26,8 @@ if not 'save_file_hdf5' in os.listdir():
         hf.create_dataset('LST', data = LST)
         hf.create_dataset('AZ',  data = AZ)
         hf.create_dataset('EL',  data = EL)
+else:
+    print('ye')
 
 start_angle = 0 # first azimuth angle
 delta_phi = 30 # when sweeping azimuth angles, phi increments by this number each iteration
