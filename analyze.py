@@ -65,7 +65,7 @@ def plot_beam(antenna_name, antenna_orientation, phi, gain, frequency, climbeam=
         print('Max frequency = {}'.format(frequency.max()))
     print('Frequency shape = {}'.format(frequency.shape))
     plt.figure()
-    plt.imshow(gain[:, :, phi], aspect='auto', extent=[0, 90, frequency.max(), frequency.min()])
+    plt.imshow(gain[:, :, phi], aspect='auto', extent=[0, 90, frequency.max(), frequency.min()], interpolation='none')
     if climbeam:
         plt.clim(climbeam)
     plt.colorbar()
@@ -81,13 +81,13 @@ def plot_beam(antenna_name, antenna_orientation, phi, gain, frequency, climbeam=
     df = frequency[1] - frequency[0]
     derivative = dG/df
     plt.figure()
-    plt.imshow(derivative, aspect='auto', extent=[0, 90, frequency.max(), frequency.min()])
+    plt.imshow(derivative, aspect='auto', extent=[0, 90, frequency.max(), frequency.min()], interpolation='none')
     plt.xlabel(r'$\theta$ [deg]')
     plt.ylabel(r'$\nu$ [MHz]')
     if climderiv:
         plt.clim(climderiv)
     plt.colorbar()
-    plt.title(r'Derivative ($\phi = {}$)'.format(phi) +'\n'+ antenna_name)
+    plt.title(r'Derivative ($\phi = {}$, $\psi_0 = {}$)'.format(phi, antenna_orientation) +'\n'+ antenna_name)
     if savepath:
         sp = 'plots/' + savepath + '/deriv'
         plt.savefig(sp)
@@ -116,7 +116,7 @@ def plot_temp_3d(freq_vector, temp_array, lst_vector, psi0, clim=None, savepath=
     freq_max = freq_vector[-1]
     LST_min = lst_vector[0]
     LST_max = lst_vector[-1]
-    plt.imshow(temp_array, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min])
+    plt.imshow(temp_array, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min], interpolation='none')
     plt.title('Antenna Temperature \n' r'$\psi_0 = {}$'.format(psi0))
     plt.ylabel('LST')
     plt.xlabel('Frequency [MHz]')
@@ -137,7 +137,7 @@ def plot_waterfalls_diff(f, t, l, ref_t, psi0, ref_psi0, clim=None, savepath=Non
     freq_max = f[-1]
     LST_min = l[0]
     LST_max = l[-1]
-    plt.imshow(dt, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min])
+    plt.imshow(dt, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min], interpolation='none')
     plt.title("Antenna Temperature at " r"$\psi_0=%d$" "\n" "Relative to Temperature at " r"$\psi_0=%d$" % (psi0, ref_psi0))
     plt.ylabel('LST [hr]')
     plt.xlabel(r'$\nu$ [MHz]')
@@ -423,14 +423,11 @@ def gaussian_rms(f, t, width_arr=None, amplitude_arr=None, centre=80, model='LIN
     plt.figure()
     left, right = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
     top, bottom = width_arr.max(), width_arr.min()
-#    if log10:
-#        norm = mpcolors.LogNorm(vmin=1, vmax=np.max(rms_g_arr/rms_ref))
-#    else:
-#        norm = None
-    if not log10:
-        plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top], interpolation='none')
+    if log10:
+        norm = mpcolors.LogNorm()
     else:
-        plt.imshow(np.log10(rms_g_arr/rms_ref), aspect='auto', extent=[left, right, bottom, top], interpolation='none')
+        norm = None
+    plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
     plt.ylabel('FWHM [MHz]')
     plt.xlabel('A [mK]')
     plt.title('RMS(Amplitude, Width) / RMS(No Gaussian)')
