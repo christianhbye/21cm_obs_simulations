@@ -65,7 +65,7 @@ def plot_beam(antenna_name, antenna_orientation, phi, gain, frequency, climbeam=
         print('Max frequency = {}'.format(frequency.max()))
     print('Frequency shape = {}'.format(frequency.shape))
     plt.figure()
-    plt.imshow(gain[:, :, phi], aspect='auto', extent=[0, 90, frequency.max(), frequency.min()], interpolation='none')
+    plt.imshow(gain[:, :, phi], aspect='auto', extent=[90, 0, frequency.max(), frequency.min()], interpolation='none')
     if climbeam:
         plt.clim(climbeam)
     plt.colorbar()
