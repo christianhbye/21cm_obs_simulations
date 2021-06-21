@@ -12,7 +12,7 @@ antenna = 'bd'
 ground_plane = False
 loc = 'sweep'
 lat_sweep = int(sys.argv[1]) * 1.5 - 90
-simulation = 'new_MIST'
+simulation = sys.argv[2]
 lowband = True
 
 if not ground_plane:
@@ -24,6 +24,10 @@ elif simulation == 'EDGES_highband':
     beam_file = '../no_git_files/EDGES_blade_high_band_infinite.out'
 elif simulation == 'EDGES_lowband':
     beam_file = '../no_git_files/EDGES_low_band_infinite_PEC.out'
+elif simulation == 'mini_MIST':
+    beam_file = '../no_git_files/mini_MIST_blade_dipole_3_groundplane_no_boxes.out'
+elif simulation == 'mystery':
+    beam_file = '../no_git_files/mystery_antenna.out'
 
 if antenna == 'bd':
     fs = 'blade_dipole'
@@ -37,19 +41,19 @@ if antenna == 'bd':
         ss = s1 + s2
     path = fs + '/' + ss + '/sweep/lat_' + str(lat_sweep)
 
+sky_model_folder = 'sky_models/blade_dipole/no_ground_plane/old_MIST/sweep/lat_' + str(lat_sweep)
 save_folder = 'sky_models/' + path 
-print(save_folder)
+if not os.path.exists(save_folder):
+    os.makedirs(save_folder)
 
 work_dir = '/scratch/s/sievers/cbye/21cm_obs_simulations/sweep'
 
 map_orig, lon, lat = ast.map_remazeilles_408MHz(map_file, galactic_coord_file)
 
 save_fname = 'save_file_hdf5_' + str(lat_sweep)
-if not os.path.exists(save_folder) or not save_fname in os.listdir(save_folder):
+if not os.path.exists(sky_model_folder) or not save_fname in os.listdir(sky_model_folder):
     ld = lat_sweep
     LST, AZ, EL = ast.galactic_to_local_coordinates_24h_LST(lon, lat, INST_lat_deg= ld, INST_lon_deg=116.605528, seconds_offset=359)
-    if not os.path.exists(save_folder):
-        os.makedirs(save_folder)
     os.chdir(save_folder)
     with h5py.File(save_fname, 'w') as hf:
         hf.create_dataset('LST', data = LST)
@@ -84,7 +88,7 @@ while i < N_angles:
                 freq_array_X /= 1e6 # convert to MHz
         elif beam_file[-4:] == '.ra1':
             freq_array_X, AZ_beam, EL_beam, gain_shifted = gen.read_beam_WIPLD(beam_file, azimuth)   
-        lst_az_el_file = save_folder+'/save_file_hdf5_' + str(lat_sweep)
+        lst_az_el_file = sky_model_folder+'/save_file_hdf5_' + str(lat_sweep)
         # Beam
         beam_all_X = np.copy(gain_shifted)
         if lowband:
