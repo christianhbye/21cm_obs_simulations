@@ -9,10 +9,10 @@ map_file = '../no_git_files/haslam408_ds_Remazeilles2014.fits'
 galactic_coord_file = '../no_git_files/pixel_coords_map_ring_galactic_res9.fits'
 
 antenna = 'bd'
-ground_plane = False
+ground_plane = True
 loc = 'sweep'
 lat_sweep = int(sys.argv[1]) * 1.5 - 90
-simulation = sys.argv[2]
+simulation = 'mini_MIST'
 lowband = True
 
 if not ground_plane:
@@ -20,19 +20,19 @@ if not ground_plane:
         beam_file = '../no_git_files/blade_dipole_MARS.out'
     elif simulation == 'old_MIST':
         beam_file = '../no_git_files/blade_dipole.out'
+    elif simulation == 'mystery':
+        beam_file = '../no_git_files/mystery_antenna.out'
 elif simulation == 'EDGES_highband':
     beam_file = '../no_git_files/EDGES_blade_high_band_infinite.out'
 elif simulation == 'EDGES_lowband':
     beam_file = '../no_git_files/EDGES_low_band_infinite_PEC.out'
 elif simulation == 'mini_MIST':
     beam_file = '../no_git_files/mini_MIST_blade_dipole_3_groundplane_no_boxes.out'
-elif simulation == 'mystery':
-    beam_file = '../no_git_files/mystery_antenna.out'
 
 if antenna == 'bd':
     fs = 'blade_dipole'
     if ground_plane:
-        s1 = 'inf_metal_ground_plane/'
+        s1 = 'metal_ground_plane/'
         s2 = simulation
         ss = s1 + s2
     else:
