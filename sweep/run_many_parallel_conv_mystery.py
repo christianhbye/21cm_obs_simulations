@@ -9,10 +9,10 @@ map_file = '../no_git_files/haslam408_ds_Remazeilles2014.fits'
 galactic_coord_file = '../no_git_files/pixel_coords_map_ring_galactic_res9.fits'
 
 antenna = 'bd'
-ground_plane = True
+ground_plane = False
 loc = 'sweep'
 lat_sweep = int(sys.argv[1]) * 1.5 - 90
-simulation = 'mini_MIST'
+simulation = 'mystery'
 lowband = True
 
 if not ground_plane:
@@ -27,7 +27,7 @@ elif simulation == 'EDGES_highband':
 elif simulation == 'EDGES_lowband':
     beam_file = '../no_git_files/EDGES_low_band_infinite_PEC.out'
 elif simulation == 'mini_MIST':
-    beam_file = '../no_git_files/mini_mist_blade_dipole_3_groundplane_no_boxes.out'
+    beam_file = '../no_git_files/mini_MIST_blade_dipole_3_groundplane_no_boxes.out'
 
 if antenna == 'bd':
     fs = 'blade_dipole'
@@ -64,7 +64,8 @@ if not os.path.exists(sky_model_folder) or not save_fname in os.listdir(sky_mode
 
 start_angle = 0 # first azimuth angle
 delta_phi = 30 # when sweeping azimuth angles, phi increments by this number each iteration
-N_angles = int((180 - start_angle)/delta_phi)
+N_angles = 1
+#N_angles = int((180 - start_angle)/delta_phi)
 # master_lst = []
 # master_freq = []
 # master_conv = []
