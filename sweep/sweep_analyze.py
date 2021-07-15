@@ -1,5 +1,6 @@
 import analyze as a
 import matplotlib.pyplot as plt
+import matplotlib.colors as mpcolors
 import numpy as np
 
 def reverse_and_shift(array, return_ind=False):
@@ -38,21 +39,56 @@ def rms_sweep(ground_plane, simulation, azimuth=0, model='LINLOG', Nfg=5):
     __, __, lst = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat_array[0], ground_plane=ground_plane, simulation=simulation)
     rms_arr = np.empty((N_lat, len(lst)))
     it = np.nditer(lat_array, flags=['f_index'])
+    if simulation == 'edges_hb':
+        flow = 100
+        fhigh = 190
+    else:
+        flow = 40
+        fhigh = 120
     for lat in it:
-        f, t, l = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat, ground_plane=ground_plane, simulation=simulation)
-        assert l.all() == lst.all()
-        if simulation == 'edges_hb':
-            flow = 100
-            fhigh = 190
-        else:
-            flow = 40
-            fhigh = 120
-        rms = a.compute_rms(f, t, flow, fhigh, Nfg_array=[Nfg], model_type=model)[0]
-        rms_arr[it.index, :] = rms[:, 0]
+        try:
+            f, t, l = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat, ground_plane=ground_plane, simulation=simulation)
+            assert l.all() == lst.all()
+            nrms = a.compute_rms(f, t, flow, fhigh, Nfg_array=[Nfg], model_type=model)[0]
+            rms = nrms[:, 0]
+        except:
+            rms = None
+            print(lat)
+        rms_arr[it.index, :] = rms
     return rms_arr
 
+def plot_hist(antenna_type, model, Nfg_array=[5, 6, 7], azimuths=[0, 90, 120], no_bins=100):
+    if antenna_type == 'mini_MIST':
+        ground_plane = True
+    else:
+        ground_plane = False
+    data = []
+    labels = []
+    for az in azimuths:
+        for N in Nfg_array:
+            rms = rms_sweep(ground_plane, antenna_type, az, model=model, Nfg=N)
+            rms_mk = rms.flatten() * 1000  # convert to mK
+            data.append(rms_mk)
+            lab = r'$\psi_0={}^\circ$, N={}'.format(az, N)
+            labels.append(lab)
+    hist, bins = np.histogram(data, bins=no_bins)
+    logbins = np.logspace(np.log10(bins[0]), np.log10(bins[-1]), len(bins))
+    colors = ['blue', 'orange', 'black']
+    ls = ['.', '-', '--']
+    plt.figure()
+    if len(Nfg_array) == 3:
+        c_array = len(azimuths) * colors
+    else:
+        c_array = None
+    plt.hist(data, histtype='step', bins=logbins, color=c_array, label=labels)
+    plt.legend()
+    plt.xscale('log')
+    plt.xlabel('RMS [mK]')
+    plt.ylabel('Counts')
+    plt.show()
+   
 
-def plot(rms_arr, azimuth, lst=None, rands_lst=False, vmin=0, vmax=None, hidex=False, hidey=False, cbar=True, save=False):
+def plot(rms_arr, azimuth, lst=None, rands_lst=False, vmin=0, vmax=None, hidex=False, hidey=False, cbar=True, log10=False, save=False):
     lat_min, lat_max = -90, 90
     plt.figure()
     # put lst=0 in the middle
@@ -71,7 +107,11 @@ def plot(rms_arr, azimuth, lst=None, rands_lst=False, vmin=0, vmax=None, hidex=F
         earr = [lst.min(), lst.max(), lat_min, lat_max]
         plt.imshow(1000 * new_rms_arr, aspect='auto', extent=earr) # *1000 to get mK
     else:
-        plt.imshow(1000 * new_rms_arr, aspect='auto') # *1000 to get mK
+        if log10:
+            norm = mpcolors.LogNorm()
+        else:
+            norm = 'none'
+        plt.imshow(1000 * new_rms_arr, aspect='auto', norm=norm) # *1000 to get mK
         ylocs = np.arange(19) * 10/1.5
         ylabs = []
         for i in range(19):

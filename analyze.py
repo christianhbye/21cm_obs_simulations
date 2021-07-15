@@ -8,13 +8,15 @@ import matplotlib.colors as mpcolors
 def read_hdf5(azimuth, varname, loc, sweep_lat=None, ground_plane=True, simulation='edges_hb'):
     parent_path = '/scratch/s/sievers/cbye/21cm_obs_simulations/'
     if ground_plane:
-        g1 = 'inf_metal_ground_plane/'
+        g1 = 'metal_ground_plane/'
         if simulation == 'edges_hb':
             g2 = 'EDGES_highband/'
         elif simulation == 'edges_lb':
             g2 = 'EDGES_lowband/'
         elif simulation == 'FEKO':
             g2 = 'FEKO_simulation/' 
+        elif simulation == 'mini_MIST':
+            g2 = 'mini_MIST/'
     else:
         g1 = 'no_ground_plane/'
         g2 = simulation + '/'
@@ -56,6 +58,7 @@ def get_ftl(azimuth, loc='mars', sweep_lat=None, ground_plane=False, simulation=
 def plot_beam(antenna_name, antenna_orientation, phi, gain, frequency, climbeam=None, climderiv=None, savepath=None):
     if gain.shape[-1] == 361:
         gain = gain[:, :, :-1] # cut last angle since 0 = 360 degrees
+    gain = gain[:, ::-1, :] # changing from elevation to theta
     print('Min frequency = {}'.format(frequency.min()))
     print('Max frequency = {}'.format(frequency.max()))
     if frequency.min() > 1e6:
@@ -65,7 +68,7 @@ def plot_beam(antenna_name, antenna_orientation, phi, gain, frequency, climbeam=
         print('Max frequency = {}'.format(frequency.max()))
     print('Frequency shape = {}'.format(frequency.shape))
     plt.figure()
-    plt.imshow(gain[:, :, phi], aspect='auto', extent=[90, 0, frequency.max(), frequency.min()], interpolation='none')
+    plt.imshow(gain[:, :, phi], aspect='auto', extent=[0, 90, frequency.max(), frequency.min()], interpolation='none')
     if climbeam:
         plt.clim(climbeam)
     plt.colorbar()
@@ -451,15 +454,16 @@ def EDGES_rms(f, t, tau_arr=None, amplitude_arr=None, model='LINLOG', Nfg=5, flo
     plt.figure()
     left, right = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
     top, bottom = tau_arr.max(), tau_arr.min()
-    plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top], interpolation='none')
+    if log10:
+        norm = mpcolors.LogNorm()
+    else:
+        norm = None
+    plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
     plt.ylabel(r'$\tau$')
     plt.xlabel('A [mK]')
     plt.title(r'RMS(Amplitude, $\tau$) / RMS(No Signal)')
     cbar = plt.colorbar()
-    if not log10:
-        cbarlabel = 'RMS/({:.2g} mK)'.format(1000*rms_ref)
-    else:
-        cbarlabel = 'log10(RMS/({:.2g} mK))'.format(1000*rms_ref)
+    cbarlabel = 'RMS/({:.2g} mK)'.format(1000*rms_ref)
     cbar.set_label(cbarlabel)
     plt.clim(vmin, vmax)
 

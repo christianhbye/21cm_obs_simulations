@@ -8,5 +8,5 @@
 source $HOME/conv_env/bin/activate
 export PYTHONPATH=$PYTHONPATH:/$SCRATCH/global21cm
 
-python run_many_parallel_conv.py $SLURM_ARRAY_TASK_ID "mini_MIST"
+python run_many_parallel_conv.py $SLURM_ARRAY_TASK_ID
 
