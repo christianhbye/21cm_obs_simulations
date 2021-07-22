@@ -33,11 +33,14 @@ def rands_nd(array, axis):
         new = array[:, idx]
     return new
 
-def rms_sweep(ground_plane, simulation, azimuth=0, model='LINLOG', Nfg=5):
+def rms_sweep(ground_plane, simulation, azimuth=0, model='EDGES_polynomial', Nfg=6, avg=False):
     N_lat = 121
     lat_array = np.linspace(90, -90, N_lat) # 121 latitudes gives 1.5 deg resolution
     __, __, lst = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat_array[0], ground_plane=ground_plane, simulation=simulation)
-    rms_arr = np.empty((N_lat, len(lst)))
+    if avg:
+        rms_arr = np.empty((N_lat))
+    else:
+        rms_arr = np.empty((N_lat, len(lst)))
     it = np.nditer(lat_array, flags=['f_index'])
     if simulation == 'edges_hb':
         flow = 100
@@ -48,13 +51,21 @@ def rms_sweep(ground_plane, simulation, azimuth=0, model='LINLOG', Nfg=5):
     for lat in it:
         try:
             f, t, l = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat, ground_plane=ground_plane, simulation=simulation)
+            if avg:  # just compute rms of avg t
+                t = np.mean(t, axis=0)
             assert l.all() == lst.all()
             nrms = a.compute_rms(f, t, flow, fhigh, Nfg_array=[Nfg], model_type=model)[0]
-            rms = nrms[:, 0]
+            if avg:
+                rms = nrms[0]
+            else:
+                rms = nrms[:, 0]
         except:
             rms = None
             print(lat)
-        rms_arr[it.index, :] = rms
+        if avg:
+            rms_arr[it.index] = rms
+        else:
+            rms_arr[it.index, :] = rms
     return rms_arr
 
 def plot_hist(antenna_type, model, Nfg_array=[5, 6, 7], azimuths=[0, 90, 120], no_bins=100):
