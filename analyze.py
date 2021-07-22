@@ -95,6 +95,32 @@ def plot_beam(antenna_name, antenna_orientation, phi, gain, frequency, climbeam=
         sp = 'plots/' + savepath + '/deriv'
         plt.savefig(sp)
 
+def plot_all_beams(derivs=False):
+    fig, axs = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
+    f, az, el, __, __, gain_large = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
+    f_s, az_s, el_s, __, __, gain_small = gen.read_beam_FEKO('no_git_files/blade_dipole_MARS.out', 0)
+    f_gp, az_gp, el_gp, __, __, gain_gp = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
+    assert f.all() == f_s.all()
+    assert f.all() == f_gp.all()
+    if f[0] >= 1e6:  # units is Hz
+        f /= 1e6  # convert to MHz
+    gain_list = [gain_large, gain_small, gain_gp]
+    for i, gain in enumerate(gain_list):
+        if gain.shape[-1] == 361:
+            gain = gain[:, :, :-1] # cut last angle since 0 = 360 degrees
+        gain = gain[:, ::-1, :] # changing from elevation to theta
+        axs[i, 0].imshow(gain[:, :, 0], aspect='auto', extent=[0, 90, f.max(), f.min()], interpolation='none')
+ #       axs[i, 0].text(80, 50, r'$\phi=0 \degree$')
+        im = axs[i, 1].imshow(gain[:, :, 90], aspect='auto', extent=[0, 90, f.max(), f.min()], interpolation='none')
+ #       axs[i, 1].text(80, 50, r'$\phi=90 \degree$')
+    axs[0, 0].set_title(r'$\phi=0 \degree$')
+    axs[0, 1].set_title(r'$\phi=90 \degree$')
+    fig.colorbar(im, ax=axs.ravel(), location='bottom')
+    plt.tight_layout()
+    plt.show()
+
+
+
 def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, savepath=None):
     '''
     Plot antenna temperature vs frequency at given LST
