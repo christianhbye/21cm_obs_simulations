@@ -120,6 +120,42 @@ def plot_all_beams(derivs=False):
     plt.show()
 
 
+def polar_beam(gain_list=None, f=None):
+    if not gain_list:
+        f, az, el, __, __, gain_large = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
+        f_s, az_s, el_s, __, __, gain_small = gen.read_beam_FEKO('no_git_files/blade_dipole_MARS.out', 0)
+        f_gp, az_gp, el_gp, __, __, gain_gp = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
+        assert f.all() == f_s.all()
+        assert f.all() == f_gp.all()
+        gain_list = [gain_large, gain_small, gain_gp]
+    if f[0] >= 1e6:  # units is Hz
+        f /= 1e6  # convert to MHz
+    find_to_plot = np.arange(0, 82, 10)  # list of frequency indices to plot gain cuts for
+    fig, axs = plt.subplots(nrows=3, ncols=2, subplot_kw={'projection': 'polar'})
+    plt.setp(axs, theta_zero_location='N')
+    plt.setp(axs, thetamin=-90, thetamax=90)
+    el = np.deg2rad(np.arange(-91, 91))
+    for i, gain in enumerate(gain_list):
+        if gain.shape[-1] == 361:
+            gain = gain[:, :, :-1] # cut last angle since 0 = 360 degrees
+        gain = gain[:, ::-1, :] # changing from elevation to theta
+        for j, find in enumerate(find_to_plot):
+            phi0 = gain[find, :, 0]  # phi = 0
+            reverse0 = np.flip(phi0)
+            gain0 = np.concatenate((reverse0, phi0))
+            axs[i, 0].plot(el, gain0, label='{:d} MHz'.format(int(f[find])))  # phi = 0 
+            phi90 = gain[find, :, 90]  # phi = 90
+            reverse90 = np.flip(phi90)
+            gain90 = np.concatenate((reverse90, phi90))
+            axs[i, 1].plot(el, gain90, label='{:d} MHz'.format(int(f[find])))  # phi = 90 
+#    axs[0, 0].legend(loc='upper left')
+    plt.setp(axs, rmax=8.2, rticks=[1, 2, 3, 4, 5, 6, 7, 8])
+    thetas = [-90, -45, 0, 45, 90]
+    tticks = [np.deg2rad(t) for t in thetas]
+    tlabels = [r'${:d} \degree$'.format(int(np.abs(t))) for t in thetas]
+    plt.setp(axs, xticks=tticks, xticklabels=tlabels)
+    plt.tight_layout()
+    
 
 def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, savepath=None):
     '''
