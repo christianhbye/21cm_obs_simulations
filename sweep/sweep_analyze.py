@@ -33,7 +33,7 @@ def rands_nd(array, axis):
         new = array[:, idx]
     return new
 
-def rms_sweep(ground_plane, simulation, azimuth=0, model='EDGES_polynomial', Nfg=6, avg=False):
+def rms_sweep(ground_plane, simulation, azimuth=0, model='EDGES_polynomial', Nfg=6, avg=False, interval=None):
     N_lat = 121
     lat_array = np.linspace(90, -90, N_lat) # 121 latitudes gives 1.5 deg resolution
     __, __, lst = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat_array[0], ground_plane=ground_plane, simulation=simulation)
@@ -52,7 +52,10 @@ def rms_sweep(ground_plane, simulation, azimuth=0, model='EDGES_polynomial', Nfg
         try:
             f, t, l = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat, ground_plane=ground_plane, simulation=simulation)
             if avg:  # just compute rms of avg t
-                t = np.mean(t, axis=0)
+                if not interval:
+                    t = np.mean(t, axis=0)
+                else:
+                    t = np.mean(t[interval[0], interval[1]], axis=0)
             assert l.all() == lst.all()
             nrms = a.compute_rms(f, t, flow, fhigh, Nfg_array=[Nfg], model_type=model)[0]
             if avg:
