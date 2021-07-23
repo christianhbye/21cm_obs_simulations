@@ -95,28 +95,57 @@ def plot_beam(antenna_name, antenna_orientation, phi, gain, frequency, climbeam=
         sp = 'plots/' + savepath + '/deriv'
         plt.savefig(sp)
 
-def plot_all_beams(derivs=False):
-    fig, axs = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
-    f, az, el, __, __, gain_large = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
-    f_s, az_s, el_s, __, __, gain_small = gen.read_beam_FEKO('no_git_files/blade_dipole_MARS.out', 0)
-    f_gp, az_gp, el_gp, __, __, gain_gp = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
-    assert f.all() == f_s.all()
-    assert f.all() == f_gp.all()
+def compute_deriv(gain, phi, frequency):
+    dG = gain[1:, :, phi] - gain[:-1, :, phi]
+    diff = frequency[1:] - frequency[:-1]
+    assert diff.all() == frequency[1] - frequency[0], 'not constant frequency spacing'
+    df = frequency[1] - frequency[0]
+    derivative = dG/df
+    return derivative
+
+def plot_all_beams(gain_list=None, f=None, derivs=False):
+    fig, axs = plt.subplots(figsize=(5,8), nrows=3, ncols=2, sharex=True, sharey=True)
+    if not gain_list:
+        f, az, el, __, __, gain_large = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
+        f_s, az_s, el_s, __, __, gain_small = gen.read_beam_FEKO('no_git_files/blade_dipole_MARS.out', 0)
+        f_gp, az_gp, el_gp, __, __, gain_gp = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
+        assert f.all() == f_s.all()
+        assert f.all() == f_gp.all()
+        gain_list = [gain_large, gain_small, gain_gp]
     if f[0] >= 1e6:  # units is Hz
         f /= 1e6  # convert to MHz
-    gain_list = [gain_large, gain_small, gain_gp]
+    if derivs:
+        vmin, vmax = -0.06, 0.08
+    else:
+        vmin, vmax = 0, 8.2
     for i, gain in enumerate(gain_list):
         if gain.shape[-1] == 361:
             gain = gain[:, :, :-1] # cut last angle since 0 = 360 degrees
         gain = gain[:, ::-1, :] # changing from elevation to theta
-        axs[i, 0].imshow(gain[:, :, 0], aspect='auto', extent=[0, 90, f.max(), f.min()], interpolation='none')
+        if derivs:
+            deriv0 = compute_deriv(gain, 0, f)
+            deriv90 = compute_deriv(gain, 90, f)
+            toplot0, toplot90 = deriv0, deriv90
+        else:
+            toplot0, toplot90 = gain[:, :, 0], gain[:, :, 90]
+        axs[i, 0].imshow(toplot0, aspect=3/4, extent=[0, 90, f.max(), f.min()], interpolation='none', vmin=vmin, vmax=vmax)
  #       axs[i, 0].text(80, 50, r'$\phi=0 \degree$')
-        im = axs[i, 1].imshow(gain[:, :, 90], aspect='auto', extent=[0, 90, f.max(), f.min()], interpolation='none')
+        im = axs[i, 1].imshow(toplot90, aspect=3/4, extent=[0, 90, f.max(), f.min()], interpolation='none', vmin=vmin, vmax=vmax)
  #       axs[i, 1].text(80, 50, r'$\phi=90 \degree$')
+        axs[i, 0].set_ylabel(r'$\nu$ [MHz]')
     axs[0, 0].set_title(r'$\phi=0 \degree$')
     axs[0, 1].set_title(r'$\phi=90 \degree$')
-    fig.colorbar(im, ax=axs.ravel(), location='bottom')
-    plt.tight_layout()
+    axs[2, 0].set_xlabel(r'$\theta$ [deg]')
+    axs[2, 1].set_xlabel(r'$\theta$ [deg]')
+    xticks = np.linspace(0, 90, 10)
+    yticks = np.linspace(40, 120, 9)
+    plt.setp(axs, xticks=xticks, yticks=yticks)
+    cbar = fig.colorbar(im, ax=axs.ravel(), location='bottom')
+    if derivs:
+        cbar.set_label('Derivative')
+    else:
+        cbar.set_label('Gain')
+#    plt.tight_layout()
     plt.show()
 
 
