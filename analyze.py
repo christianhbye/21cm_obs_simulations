@@ -108,7 +108,7 @@ def plot_all_beams(gain_list=None, f=None, derivs=False):
     if not gain_list:
         f, az, el, __, __, gain_large = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
         f_s, az_s, el_s, __, __, gain_small = gen.read_beam_FEKO('no_git_files/blade_dipole_MARS.out', 0)
-        f_gp, az_gp, el_gp, __, __, gain_gp = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
+        f_gp, az_gp, el_gp, __, __, gain_gp = gen.read_beam_FEKO('no_git_files/mini_mist_blade_dipole_3_groundplane_no_boxes.out', 0)
         assert f.all() == f_s.all()
         assert f.all() == f_gp.all()
         gain_list = [gain_large, gain_small, gain_gp]
@@ -149,18 +149,21 @@ def plot_all_beams(gain_list=None, f=None, derivs=False):
     plt.show()
 
 
-def polar_beam(gain_list=None, f=None):
+def polar_beam(gain_list=None, f=None, figsize=None):
+    return_gain = False
     if not gain_list:
         f, az, el, __, __, gain_large = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
         f_s, az_s, el_s, __, __, gain_small = gen.read_beam_FEKO('no_git_files/blade_dipole_MARS.out', 0)
-        f_gp, az_gp, el_gp, __, __, gain_gp = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
+        f_gp, az_gp, el_gp, __, __, gain_gp = gen.read_beam_FEKO('no_git_files/mini_mist_blade_dipole_3_groundplane_no_boxes.out', 0)
         assert f.all() == f_s.all()
         assert f.all() == f_gp.all()
         gain_list = [gain_large, gain_small, gain_gp]
+        rgain_list = [gain_large.copy(), gain_small.copy(), gain_gp.copy()]
+        return_gain = True
     if f[0] >= 1e6:  # units is Hz
         f /= 1e6  # convert to MHz
     find_to_plot = np.arange(0, 82, 10)  # list of frequency indices to plot gain cuts for
-    fig, axs = plt.subplots(nrows=3, ncols=2, subplot_kw={'projection': 'polar'})
+    fig, axs = plt.subplots(figsize=figsize, nrows=3, ncols=2, subplot_kw={'projection': 'polar'}, gridspec_kw={'wspace':0, 'hspace':0})
     plt.setp(axs, theta_zero_location='N')
     plt.setp(axs, thetamin=-90, thetamax=90)
     el = np.deg2rad(np.arange(-91, 91))
@@ -178,13 +181,18 @@ def polar_beam(gain_list=None, f=None):
             gain90 = np.concatenate((reverse90, phi90))
             axs[i, 1].plot(el, gain90, label='{:d} MHz'.format(int(f[find])))  # phi = 90 
 #    axs[0, 0].legend(loc='upper left')
-    plt.setp(axs, rmax=8.2, rticks=[1, 2, 3, 4, 5, 6, 7, 8])
+    handles, labels = axs[-1, -1].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='center')
+    plt.setp(axs, rmax=9, rticks=[1, 2, 3, 4, 5, 6, 7, 8, 9])
     thetas = [-90, -45, 0, 45, 90]
     tticks = [np.deg2rad(t) for t in thetas]
     tlabels = [r'${:d} \degree$'.format(int(np.abs(t))) for t in thetas]
     plt.setp(axs, xticks=tticks, xticklabels=tlabels)
-    plt.tight_layout()
-    
+    axs[0, 0].set_title(r'$\phi=0 \degree$')
+    axs[0, 1].set_title(r'$\phi=90 \degree$')
+   # plt.tight_layout()
+    if return_gain:
+        return rgain_list, f
 
 def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, savepath=None):
     '''
