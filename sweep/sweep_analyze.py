@@ -1,6 +1,7 @@
 import analyze as a
 import matplotlib.pyplot as plt
 import matplotlib.colors as mpcolors
+from matplotlib.lines import Line2D
 import numpy as np
 
 def reverse_and_shift(array, return_ind=False):
@@ -88,15 +89,26 @@ def get_hist(antenna_type, model, Nfg_array=[5, 6, 7], azimuths=[0, 90, 120], no
 
 def plot_hist():
     fig, axs = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
-    plt.xscale('log')
-    plt.xlabel('RMS [mK]')
-    plt.ylabel('Counts')
-# legend
-    plt.show()
-    return axs
+    axs[0, 0].set_ylabel('Counts')
+    axs[1, 0].set_ylabel('Counts')
+    axs[2, 0].set_ylabel('Counts')
+    axs[2, 0].set_xlabel('RMS [mK]')
+    axs[2, 1].set_xlabel('RMS [mK]')
+    plt.setp(axs, xscale='log')
+    handles = [Line2D([0], [0], color='C0', lw=4), Line2D([0], [0], color='C1', lw=4), Line2D([0], [0], color='C2', lw=4)]
+    handles.append(Line2D([0], [0], color='black', lw=4, ls='solid'))
+    handles.append(Line2D([0], [0], color='black', lw=4, ls='dashed'))
+    handles.append(Line2D([0], [0], color='black', lw=4, ls='dotted'))
+    fig.legend(handles=handles, labels=['N=5', 'N=6', 'N=7', r'$\psi_0=0 \degree$', r'$\psi_0=90 \degree$', r'$\psi_0=120 \degree$'])
+#    plt.show()
+    return fig, axs
 
 def add_hist(ax, data, logbins):
-    ax.hist(data, histtype='step', bins=logbins, color=['blue', 'orange', 'black'])
+    carray = ['C0', 'C1', 'C2'] * 3
+    lss = ['solid', 'dashed', 'dotted']
+    for i in range(9):
+        ls = lss[int(i/3)] 
+        ax.hist(data[i], histtype='step', bins=logbins, color=carray[i], ls=ls)
 
 def plot(rms_arr, azimuth, lst=None, rands_lst=False, vmin=0, vmax=None, hidex=False, hidey=False, cbar=True, log10=False, save=False):
     lat_min, lat_max = -90, 90
