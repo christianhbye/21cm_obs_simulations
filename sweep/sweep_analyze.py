@@ -71,36 +71,32 @@ def rms_sweep(ground_plane, simulation, azimuth=0, model='EDGES_polynomial', Nfg
             rms_arr[it.index, :] = rms
     return rms_arr
 
-def plot_hist(antenna_type, model, Nfg_array=[5, 6, 7], azimuths=[0, 90, 120], no_bins=100):
+def get_hist(antenna_type, model, Nfg_array=[5, 6, 7], azimuths=[0, 90, 120], no_bins=100):
     if antenna_type == 'mini_MIST':
         ground_plane = True
     else:
         ground_plane = False
     data = []
-    labels = []
     for az in azimuths:
         for N in Nfg_array:
             rms = rms_sweep(ground_plane, antenna_type, az, model=model, Nfg=N)
             rms_mk = rms.flatten() * 1000  # convert to mK
             data.append(rms_mk)
-            lab = r'$\psi_0={}^\circ$, N={}'.format(az, N)
-            labels.append(lab)
     hist, bins = np.histogram(data, bins=no_bins)
     logbins = np.logspace(np.log10(bins[0]), np.log10(bins[-1]), len(bins))
-    colors = ['blue', 'orange', 'black']
-    ls = ['.', '-', '--']
-    plt.figure()
-    if len(Nfg_array) == 3:
-        c_array = len(azimuths) * colors
-    else:
-        c_array = None
-    plt.hist(data, histtype='step', bins=logbins, color=c_array, label=labels)
-    plt.legend()
+    return data, logbins
+
+def plot_hist():
+    fig, axs = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
     plt.xscale('log')
     plt.xlabel('RMS [mK]')
     plt.ylabel('Counts')
+# legend
     plt.show()
-   
+    return axs
+
+def add_hist(ax, data, logbins):
+    ax.hist(data, histtype='step', bins=logbins, color=['blue', 'orange', 'black'])
 
 def plot(rms_arr, azimuth, lst=None, rands_lst=False, vmin=0, vmax=None, hidex=False, hidey=False, cbar=True, log10=False, save=False):
     lat_min, lat_max = -90, 90
