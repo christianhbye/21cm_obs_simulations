@@ -34,7 +34,7 @@ def rands_nd(array, axis):
         new = array[:, idx]
     return new
 
-def rms_sweep(ground_plane, simulation, azimuth=0, model='EDGES_polynomial', Nfg=6, avg=False, interval=None):
+def rms_sweep(ground_plane, simulation, azimuth=0, model='EDGES_polynomial', Nfg=6, avg=False, halfstart=None):
     N_lat = 121
     lat_array = np.linspace(90, -90, N_lat) # 121 latitudes gives 1.5 deg resolution
     __, __, lst = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat_array[0], ground_plane=ground_plane, simulation=simulation)
@@ -53,10 +53,10 @@ def rms_sweep(ground_plane, simulation, azimuth=0, model='EDGES_polynomial', Nfg
         try:
             f, t, l = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat, ground_plane=ground_plane, simulation=simulation)
             if avg:  # just compute rms of avg t
-                if not interval:
+                if not halfstart:
                     t = np.mean(t, axis=0)
                 else:
-                    t = np.mean(t[interval[0], interval[1]], axis=0)
+                    t = np.mean(t[halfstart, halfstart+120], axis=0)
             assert l.all() == lst.all()
             nrms = a.compute_rms(f, t, flow, fhigh, Nfg_array=[Nfg], model_type=model)[0]
             if avg:
@@ -71,6 +71,33 @@ def rms_sweep(ground_plane, simulation, azimuth=0, model='EDGES_polynomial', Nfg
         else:
             rms_arr[it.index, :] = rms
     return rms_arr
+
+def rmsvslat(azimuths=[0, 90, 120], halfstarts=None):
+    antennas = ['old_MIST', 'new_MIST', 'mini_MIST']
+    models=['LINLOG', 'EDGES_polynomial']
+    fig, axs = plt.subplots(nrows=3, ncols=2, sharex=True, sharey='col')
+    lats = np.linspace(90, -90, 121)
+    for i, antenna in enumerate(antennas):
+        axs[i, 0].set_ylabel('RMS [mK]')
+        if antenna == 'mini_MIST':
+            ground_plane = True
+        else:
+            ground_plane = False
+        for j, az in enumerate(azimuths):
+            for k, model in enumerate(models):
+                if not halfstarts is None:
+                    halfstart = halfstarts[i, j, k]
+                else:
+                    halfstart = None
+                rms = rms_sweep(ground_plane, antenna, az, model, Nfg=6, avg=True, halfstart=halfstart)
+                rms *= 1000
+                axs[i, k].plot(rms, label=r'$\psi_0={:d} \degree$'.format(az))
+    axs[2, 0].set_xlabel('Latitude [deg]')
+    axs[2, 1].set_xlabel('Latitude [deg]')
+    axs[0, 1].legend(loc='upper right')
+   # handles, labels = axs[0, 0].get_legend_handles_labels()
+   # fig.legend(handles, labels, loc='upper center')
+    return fig, axs
 
 def get_hist(antenna_type, model, Nfg_array=[5, 6, 7], azimuths=[0, 90, 120], no_bins=100):
     if antenna_type == 'mini_MIST':
