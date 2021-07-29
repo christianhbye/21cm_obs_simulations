@@ -443,6 +443,28 @@ def smallestLSTavg(f_in, temp, lst, bin_widths=[10, 20, 30, 40, 60, 80, 120, 241
     newt = tavg[ind, :]
     return newt
 
+def get_smallest12_24(antenna_type, latitudes=[79.5, -24.0], azimuths=[0, 90, 120], model='EDGES_polynomial', Nfg=6):
+    if antenna_type == 'mini_MIST':
+        ground_plane = True
+    else:
+        ground_plane = False
+    results24 = np.empty((len(latitudes), len(azimuths)))
+    results12 = np.empty((len(latitudes), len(azimuths), 2))
+    for i, lat in enumerate(latitudes):
+        for j, az in enumerate(azimuths):
+            f, t, l = get_ftl(az, loc='sweep', sweep_lat=lat, ground_plane=ground_plane, simulation=antenna_type)
+            t24 = np.mean(t, axis=0)  # 24 h avg
+            rms = compute_rms(f, t24, 40, 120, Nfg_array=[6], model_type=model)[0]
+            rms_mk_24 = rms[0,0] * 1000
+            results24[i, j] = rms_mk_24
+            ind12, __, rms_12 = get_smallestLST(f, t, l, bin_widths=[120], model=model, band='low', Nfg=6)
+            assert __ == 120
+            rms_mk_12 = rms_12 * 1000
+            results12[i, j, 0] = ind12
+            results12[i, j, 1] = rms_mk_12
+    return results12, results24
+            
+
 def plot_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5, split=None, ylim=None):
     plt.figure()
     plt.xlabel('LST')
