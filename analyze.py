@@ -539,7 +539,7 @@ def add_EDGESsignal(f, t, tau, amplitude):
     newt += signal
     return newt
 
-def gaussian_rms(f, t, width_arr=None, amplitude_arr=None, centre=80, model='LINLOG', Nfg=5, flow=40, fhigh=120, vmin=0, vmax=None, log10=False):
+def gaussian_rms(f, t, width_arr=None, amplitude_arr=None, centre=80, model='LINLOG', Nfg=5, flow=40, fhigh=120, vmin=0, vmax=None, log10=False, plot=True):
     if width_arr is None:
         width_arr = np.linspace(0, 50, 201)
     if amplitude_arr is None:
@@ -554,23 +554,26 @@ def gaussian_rms(f, t, width_arr=None, amplitude_arr=None, centre=80, model='LIN
                 tg = add_Gaussian(f, t, w, a, centre=centre)
                 rms_g = compute_rms(f, tg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
             rms_g_arr[-(i+1), -(j+1)] = rms_g[0, 0]
-    plt.figure()
-    left, right = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
-    top, bottom = width_arr.max(), width_arr.min()
-    if log10:
-        norm = mpcolors.LogNorm()
+    if not plot:
+        return rms_g_arr/rms_ref, rms_ref
     else:
-        norm = None
-    plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
-    plt.ylabel('FWHM [MHz]')
-    plt.xlabel('A [mK]')
-    plt.title('RMS(Amplitude, Width) / RMS(No Gaussian)')
-    cbar = plt.colorbar()
-    cbarlabel = 'RMS/({:.2g} mK)'.format(1000*rms_ref)
-    cbar.set_label(cbarlabel)
-    plt.clim(vmin, vmax)
+        plt.figure()
+        left, right = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
+        top, bottom = width_arr.max(), width_arr.min()
+        if log10:
+            norm = mpcolors.LogNorm()
+        else:
+            norm = None
+        plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
+        plt.ylabel('FWHM [MHz]')
+        plt.xlabel('A [mK]')
+        plt.title('RMS(Amplitude, Width) / RMS(No Gaussian)')
+        cbar = plt.colorbar()
+        cbarlabel = 'RMS/({:.2g} mK)'.format(1000*rms_ref)
+        cbar.set_label(cbarlabel)
+        plt.clim(vmin, vmax)
 
-def EDGES_rms(f, t, tau_arr=None, amplitude_arr=None, model='LINLOG', Nfg=5, flow=40, fhigh=120, vmin=0, vmax=None, log10=False):
+def EDGES_rms(f, t, tau_arr=None, amplitude_arr=None, model='LINLOG', Nfg=5, flow=40, fhigh=120, vmin=0, vmax=None, log10=False, plot=True):
     if tau_arr is None:
         tau_arr = np.linspace(0, 30, 121)
     if amplitude_arr is None:
@@ -582,23 +585,43 @@ def EDGES_rms(f, t, tau_arr=None, amplitude_arr=None, model='LINLOG', Nfg=5, flo
             tg = add_EDGESsignal(f, t, tau, a)
             rms_g = compute_rms(f, tg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])[0]
             rms_g_arr[-(i+1), -(j+1)] = rms_g[0, 0]
-    plt.figure()
-    left, right = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
-    top, bottom = tau_arr.max(), tau_arr.min()
+    if not plot:
+        return rms_g_arr/rms_ref, rms_ref
+    else:
+        plt.figure()
+        left, right = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
+        top, bottom = tau_arr.max(), tau_arr.min()
+        if log10:
+            norm = mpcolors.LogNorm()
+        else:
+            norm = None
+        plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
+        plt.ylabel(r'$\tau$')
+        plt.xlabel('A [mK]')
+        plt.title(r'RMS(Amplitude, $\tau$) / RMS(No Signal)')
+        cbar = plt.colorbar()
+        cbarlabel = 'RMS/({:.2g} mK)'.format(1000*rms_ref)
+        cbar.set_label(cbarlabel)
+        plt.clim(vmin, vmax)
+
+def plot_gauss_edges(gauss40, gauss80. gauss120, edges, log10=True):
+    in = [gauss40, gauss80, gauss120, egdes]
+    fig, axs = plt.subplots(nrows=1, ncols=4)
     if log10:
         norm = mpcolors.LogNorm()
     else:
         norm = None
-    plt.imshow(rms_g_arr/rms_ref, aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
-    plt.ylabel(r'$\tau$')
-    plt.xlabel('A [mK]')
-    plt.title(r'RMS(Amplitude, $\tau$) / RMS(No Signal)')
-    cbar = plt.colorbar()
-    cbarlabel = 'RMS/({:.2g} mK)'.format(1000*rms_ref)
-    cbar.set_label(cbarlabel)
-    plt.clim(vmin, vmax)
-
-
+    for i, axs in enumerate(axs.flatten()):
+        left, right = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
+        if not i == 3:
+            top, bottom = width_arr.max(), width_arr.min()
+            ylab = 'FWHM [MHz]'
+        else:
+             top, bottom = tau_arr.max(), tau_arr.min()
+             ylab = r'$\tau$
+        ax.imshow(in[i], aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
+        ax.set_xlabel('A [mK]')
+        ax.set_ylabel(ylab)
 
 def save_all_plots(loc='mars', ground_plane=True, simulation='edges_hb'):
 #    azimuths = [0, 30, 60, 90, 120, 150]
