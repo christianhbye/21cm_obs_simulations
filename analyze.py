@@ -623,13 +623,15 @@ def plot_gauss_edges(gauss40, gauss80, gauss120, edges, log10=True, vmin=None, v
              top, bottom = tau_arr.max(), tau_arr.min()
              ylab = r'$\tau$'
         im = ax.imshow(input[i], aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
-        if i == 1 or i == 3:
+        if i > 1:
             ax.set_xlabel('A [mK]')
         ax.set_ylabel(ylab)
     axs[0,0].text(-900, 45, 'a)')
     axs[0,1].text(-900, 27, 'b)')
     axs[1,0].text(-900, 45, 'c)')
     axs[1,1].text(-900, 45, 'd)')
+    axs[0, 0].scatter(-100, 25, facecolors='none', edgecolors='white')
+    axs[0, 1].scatter(-500, 7, facecolors='none', edgecolors='white')
     cbar = fig.colorbar(im, ax=axs.ravel(), location='right', ticks=[1, 10, 50, 100, 200])
     cbar.set_ticklabels(['1', '10', '50', '100', '200'])
     if vmin is None:
