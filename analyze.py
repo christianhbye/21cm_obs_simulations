@@ -604,24 +604,37 @@ def EDGES_rms(f, t, tau_arr=None, amplitude_arr=None, model='LINLOG', Nfg=5, flo
         cbar.set_label(cbarlabel)
         plt.clim(vmin, vmax)
 
-def plot_gauss_edges(gauss40, gauss80. gauss120, edges, log10=True):
-    in = [gauss40, gauss80, gauss120, egdes]
-    fig, axs = plt.subplots(nrows=1, ncols=4)
+def plot_gauss_edges(gauss40, gauss80, gauss120, edges, log10=True, vmin=None, vmax=None):
+    input = [gauss80, edges, gauss40, gauss120]
+    amplitude_arr = np.linspace(-1, 0, 201)
+    width_arr = np.linspace(0, 50, 201)
+    tau_arr = np.linspace(0, 30, 121)
+    fig, axs = plt.subplots(nrows=2, ncols=2, sharex=True)
     if log10:
         norm = mpcolors.LogNorm()
     else:
         norm = None
-    for i, axs in enumerate(axs.flatten()):
+    for i, ax in enumerate(axs.flatten()):
         left, right = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
-        if not i == 3:
+        if not i == 1:
             top, bottom = width_arr.max(), width_arr.min()
             ylab = 'FWHM [MHz]'
         else:
              top, bottom = tau_arr.max(), tau_arr.min()
-             ylab = r'$\tau$
-        ax.imshow(in[i], aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
-        ax.set_xlabel('A [mK]')
+             ylab = r'$\tau$'
+        im = ax.imshow(input[i], aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
+        if i == 1 or i == 3:
+            ax.set_xlabel('A [mK]')
         ax.set_ylabel(ylab)
+    axs[0,0].text(-900, 45, 'a)')
+    axs[0,1].text(-900, 27, 'b)')
+    axs[1,0].text(-900, 45, 'c)')
+    axs[1,1].text(-900, 45, 'd)')
+    cbar = fig.colorbar(im, ax=axs.ravel(), location='right', ticks=[1, 10, 50, 100, 200])
+    cbar.set_ticklabels(['1', '10', '50', '100', '200'])
+    if vmin is None:
+        vmin = 0.9 * np.min([np.min(r[:-1, :]) for r in input])
+    im.set_clim(vmin, vmax)
 
 def save_all_plots(loc='mars', ground_plane=True, simulation='edges_hb'):
 #    azimuths = [0, 30, 60, 90, 120, 150]
