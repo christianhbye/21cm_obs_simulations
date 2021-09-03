@@ -3,18 +3,22 @@ from matplotlib import gridspec
 import analyze as a
 import general as gen
 
-def plot_basic(nrows, ncols, left, right, wspace, hspace):
-    fig = plt.figure(constrained_layout=False)
+def plot_basic(nrows, ncols, sharex, sharey, figsize,  wspace, hspace):
+    fig = plt.figure(figsize=figsize, constrained_layout=False)
     spec = gridspec.GridSpec(ncols=ncols, nrows=nrows, left=left, right=right, wspace=wspace, hspace=hspace, figure=fig)
     axs = []
     for i in range(nrows):
         for j in range(ncols):
             ax = fig.add_subplot(spec[i, j])
+            if sharex and i < nrows - 1:
+                ax.label_outer()  # hide xticklabels on all but bottom row if sharex
+            if sharey and j > 0:
+                ax.label_outer()
             axs.append(ax)
     return fig, axs
 
-def beams(gain_list=None, f=None, derivs=False):
-    fig, axs = plot_basic(3, 2, None, None, 0.5, 0.5)
+def beams(gain_list=None, f=None, derivs=False, aspect='equal', figsize=(9, 6)):
+    fig, axs = plot_basic(3, 2, True, True, figsize, 0.2, 0.2)
     return_gain = False
     if not gain_list:
         return_gain = True
@@ -28,7 +32,6 @@ def beams(gain_list=None, f=None, derivs=False):
     if f[0] >= 1e6:  # units are likely Hz so convert to MHz
         f /= 1e6
     extent = [0, 90, f.min(), f.max()]
-    aspect = len(az)/len(f)
     for i, gain in enumerate(gain_list):
         if gain.shape[-1] == 361:
             gain =  gain[:, :, :-1]
