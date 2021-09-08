@@ -1,7 +1,9 @@
 import analyze as a
+import paper_plots as pp
 import matplotlib.pyplot as plt
 import matplotlib.colors as mpcolors
 from matplotlib.lines import Line2D
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
 def reverse_and_shift(array, return_ind=False):
@@ -187,28 +189,35 @@ def plot(rms_arr, azimuth, lst=None, rands_lst=False, vmin=0, vmax=None, hidex=F
         plt.savefig('plots/' + model + '_' + str(azimuth) + '.svg')
     
 
-def subplot(rms_arr_list, azlist, nrows=3, ncols=3):
+def subplot(rms_arr_list, azlist=[0, 90, 120], nrows=3, ncols=3):
     """
     rms_arr_list is a list of rms_arr st [0] goes in the first subplot etc
     """
     alph = ['a)', 'b)', 'c)', 'd)', 'e)', 'f)', 'g)', 'h)', 'i)']
-    fig, axs = plt.subplots(nrows=nrows, ncols=ncols, sharex=True, sharey=True)
-    for i, ax in enumerate(axs.flat):
-        im = ax.imshow(rms_arr_list[i] * 1000, aspect='auto', interpolation='none', norm=mpcolors.LogNorm())
+    fig, axs = pp.plot_basic(nrows, ncols, sharex=True, sharey=True, wspace=0.2, hspace=0.2, figsize=None, xmajor=4, xminor=1, ymajor=30, yminor=10)
+   # fig, axs = plt.subplots(nrows=nrows, ncols=ncols, sharex=True, sharey=True)
+    for i, ax in enumerate(axs):
+        im = ax.imshow(rms_arr_list[i] * 1000, aspect='auto', extent=[0, 24, -90, 90], interpolation='none', norm=mpcolors.LogNorm())
+        im.set_clim(10, 500)
         ax.grid(linestyle='--')
-        ax.text(17, 17, alph[i])
-        if i > 5:
-            ax.set_xlabel('LST [h]')
-        if i%3 == 0:
-            ax.set_ylabel('Latitude [deg]')
-    labs = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]
-    locs = [10*l for l in labs]
-    plt.setp(axs, xticks=locs, xticklabels=labs)
-    ylocs = np.arange(19) * 10/1.5
-    ylabs = []
-    for i in range(19):
-        label = 90 - 10*i
-        ylabs.append(label)
-    plt.setp(axs, yticks=ylocs, yticklabels=ylabs)
-    cbar = fig.colorbar(im, ax=axs.ravel(), location='right')
-    # saturate scale 0-500, remove some yticks
+        ax.text(21, 60, alph[i], color='white')
+       # if i > 5:
+       #     ax.set_xlabel('LST [h]')
+      #  if i%3 == 0:
+      #      ax.set_ylabel('Latitude [deg]')
+  #  labs = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]
+  #  locs = [10*l for l in labs]
+  #  plt.setp(axs, xticks=locs, xticklabels=labs)
+  #  ylocs = np.arange(19) * 10/1.5
+  #  ylabs = []
+  #  for i in range(19):
+  #      label = 90 - 10*i
+  #      ylabs.append(label)
+  #  plt.setp(axs, yticks=ylocs, yticklabels=ylabs)
+    for i in range(3):
+        axs[3*i].set_ylabel('Latitude [deg]')
+        axs[6+i].set_xlabel('LST [h]')
+    cbar = fig.colorbar(im, ax=axs, ticks=[10, 50, 100, 200, 300, 400, 500])
+    cbar.set_ticklabels(['10', '50', '100', '200', '300', '400', '500'])
+    cbar.set_label('RMS [mK]')
+    return fig, axs

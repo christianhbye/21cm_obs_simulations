@@ -5,7 +5,7 @@ import general as gen
 import matplotlib.pyplot as plt
 import matplotlib.colors as mpcolors
 from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
-
+import paper_plots as pp
 
 def read_hdf5(azimuth, varname, loc, sweep_lat=None, ground_plane=True, simulation='edges_hb'):
     parent_path = '/scratch/s/sievers/cbye/21cm_obs_simulations/'
@@ -485,7 +485,7 @@ def plot_LSTbins(f_in, temp, lst, bin_widths, model='LINLOG', band='low', Nfg=5,
         plt.ylim(ylim)
     plt.show()    
 
-def plot2D_LSTbins(f_in, temp, lst, bin_widths=[10, 20, 30, 40, 60, 80, 120, 241], model='LINLOG', band='low', Nfg=5, vmin=0, vmax=None):
+def plot2D_LSTbins(f_in, temp, lst, bin_widths=[10, 20, 30, 40, 60, 80, 120, 241], model='EDGES_polynomial', band='low', Nfg=6):
     rms_arr = np.empty((len(bin_widths)+1, len(lst)))
     if band == 'low':
         flow = 40
@@ -498,15 +498,23 @@ def plot2D_LSTbins(f_in, temp, lst, bin_widths=[10, 20, 30, 40, 60, 80, 120, 241
     for i, bw in enumerate(bin_widths):
         rms = sliding_binLST(f_in, temp, bw, model=model, band=band, Nfg=Nfg)
         rms_arr[i+1, :] = rms * 1000
-    plt.figure()
-    plt.xlabel('LST [hr]')
-    plt.ylabel('Bin Width [hr]')
-    plt.yticks([0., 1., 2., 3., 4., 5., 6., 7., 8.], ['0', '1', '2', '3', '4', '6', '8', '12', '24'])
-    plt.xticks([0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240], ['0', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20', '22', '24'])
-    plt.imshow(rms_arr, aspect='auto', interpolation='none')
-    plt.colorbar(label='RMS [mK]')
-    plt.clim(vmin=vmin, vmax=vmax)
-    plt.grid(which='minor')
+    return rms_arr
+#    plt.figure()
+#    plt.xlabel('LST [hr]')
+#    plt.ylabel('Bin Width [hr]')
+#    plt.yticks([0., 1., 2., 3., 4., 5., 6., 7., 8.], ['0', '1', '2', '3', '4', '6', '8', '12', '24'])
+#    plt.xticks([0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240], ['0', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20', '22', '24'])
+#    plt.imshow(rms_arr, aspect='auto', interpolation='none')
+#    plt.colorbar(label='RMS [mK]')
+#    plt.clim(vmin=vmin, vmax=vmax)
+ #   plt.grid(which='minor')
+
+def subplot_LSTbins(rms_arr_super):
+    fig, axs = pp.plot_basic(3, 3, True, True, figsize=None, wspace=0.3, hspace=0.3, xmajor=4, xminor=1, ymajor=1, yminor=1)
+    for i in range(9):
+        im = axs[i].imshow(rms_arr_super[:, :, i], aspect='auto', interpolation='none', norm=LogNorm()) 
+        im.set_clim(0, 120)
+    return fig, axs
 
 def add_Gaussian(f, t, width, amplitude, centre=80):
     if width == 0:
