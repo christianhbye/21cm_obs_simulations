@@ -1,19 +1,23 @@
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
-from matplotlib.ticker import MultipleLocator
+from matplotlib.ticker import MultipleLocator, LogLocator
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import analyze as a
 import general as gen
 
-def plot_basic(nrows, ncols, sharex, sharey, figsize,  wspace, hspace, xmajor, xminor, ymajor, yminor):
+def plot_basic(nrows, ncols, sharex, sharey, figsize,  wspace, hspace, xmajor, xminor, ymajor, yminor, xlog=False):
     fig = plt.figure(figsize=figsize, constrained_layout=False)
     spec = gridspec.GridSpec(ncols=ncols, nrows=nrows, left=None, right=None, wspace=wspace, hspace=hspace, figure=fig)
     axs = []
     for i in range(nrows):
         for j in range(ncols):
             ax = fig.add_subplot(spec[i, j])
-            ax.xaxis.set_major_locator(MultipleLocator(xmajor))
-            ax.xaxis.set_minor_locator(MultipleLocator(xminor))
+            if xlog:
+                ax.xais.set_major_locator(LogLocator(base=10, numticks=xmajor)
+                ax.set_xscale('log')
+            else:
+                ax.xaxis.set_major_locator(MultipleLocator(xmajor))
+                ax.xaxis.set_minor_locator(MultipleLocator(xminor))
             ax.yaxis.set_major_locator(MultipleLocator(ymajor))
             ax.yaxis.set_minor_locator(MultipleLocator(yminor))
             if sharex and i < nrows - 1:
@@ -76,4 +80,16 @@ def beams_labels(fig, axs, derivs=False):
     for i in range(6):
         label = chr(chrstart+i) + ')'
         axs[i].text(80, 50, label, color='white')
+
+def histogram(*args):
+    """
+    * args must be in the order: largell, largeep, smallll, smallep, gpll, gpep (same as figs)
+    Each input arg is an rms array of shape (3, 3) where the row is number of params (5, 6, 7) and
+    the col is orientation (0, 90, 120)
+    """
+    fig, axs = plot_basic(3, 2, True, True, None, 0, 0, 15, None, 200, 100, xlog=True)
+    for i, array in enumerate(args):
+        d 
+        axs[i].imshow()
+    
 
