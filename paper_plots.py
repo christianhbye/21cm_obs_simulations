@@ -119,7 +119,7 @@ def histogram(*args, no_bins=100):
         axs[i].set_title(titles[i])
     for i in range(3):
         axs[2*i].set_ylabel('Counts')
-    plt.setp(axs, ylim=(0, 2200))
+    plt.setp(axs, ylim=(0, 2200), xlim=(0.1, 12000))
     lines = []
     lstyles = []
     for i in range(3):
