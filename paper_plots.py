@@ -1,7 +1,8 @@
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
+from matplotlib import lines as mlines
 from matplotlib.ticker import MultipleLocator, LogLocator
-from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
+import numpy as np
 import analyze as a
 import general as gen
 
@@ -12,10 +13,7 @@ def plot_basic(nrows, ncols, sharex, sharey, figsize,  wspace, hspace, xmajor, x
     for i in range(nrows):
         for j in range(ncols):
             ax = fig.add_subplot(spec[i, j])
-            if xlog:
-                ax.xais.set_major_locator(LogLocator(base=10, numticks=xmajor)
-                ax.set_xscale('log')
-            else:
+            if not xlog:
                 ax.xaxis.set_major_locator(MultipleLocator(xmajor))
                 ax.xaxis.set_minor_locator(MultipleLocator(xminor))
             ax.yaxis.set_major_locator(MultipleLocator(ymajor))
@@ -87,29 +85,47 @@ def histogram(*args, no_bins=100):
     Each input arg is an rms array of shape (3, 3) where the row is number of params (5, 6, 7) and
     the col is orientation (0, 90, 120)
     """
-    fig, axs = plot_basic(3, 2, True, True, None, 0, 0, 15, None, 200, 100, xlog=True)
+    fig, axs = plot_basic(3, 2, True, True, None, 0.1, 0.1, None, None, 300, 150, xlog=True)
     for i, array in enumerate(args):
         if array.max() < 10:
             array *= 1000  # the units are definitely K, convert to mK
-        d = array.flatten()
-        hist, bins = np.hist(d, no_bins)
+        d = [array[i, j, :] for i in range(3) for j in range(3)]
+        assert len(d) == 9
+        __, bins = np.histogram(d, no_bins)
         logbins = np.logspace(np.log10(bins[0]), np.log10(bins[-1]), len(bins))
         colors = ['black', 'red', 'blue']
         linestyles = ['solid', 'dashed', 'dotted']
         Nfgs = [5, 6, 7]
         azs = [0, 90, 120]
+        panellabel = chr(97+i) + ')'
+        axs[i].text(0.95, 0.85, panellabel, transform=axs[i].transAxes)        
         for j in range(3):
             for k in range(3):
                 line_col = colors[j]
                 line_style = linestyles[k]
-                lab = r'N = {Nfgs[j]}, $\psi_0 = {azs[k]} \degree$'
-                axs[i].hist(array[j, k], bins=logbins, histtype='step', color=line_col, ls=line_style, label=lab)
+#                lab = r'N = {}, $\psi_0 = {} \degree$'.format(Nfgs[j], azs[k])
+                axs[i].hist(array[j, k, :], bins=logbins, histtype='step', color=line_col, ls=line_style)  #, label=lab)
+                axs[i].set_xscale('log')
+                axs[i].xaxis.set_major_locator(LogLocator(base=10, numticks=15))
     titles = ['LinLog', 'EDGES Polynomial']
     for i in range(2):
         axs[-(i+1)].set_xlabel('RMS [mK]')
         axs[i].set_title(titles[i])
     for i in range(3):
-        axs[3*i].set_ylabel('Counts')
-    axs[0].legend()
+        axs[2*i].set_ylabel('Counts')
+    plt.setp(axs, ylim=(0, 1800))
+    lines = []
+    lstyles = []
+    for i in range(3):
+        label_c = 'N = {}'.format(Nfgs[i])
+        line = mlines.Line2D([], [], color=colors[i], label=label_c)
+        lines.append(line)
+        label_s = r'$\psi_0 = {} \degree$'.format(azs[i])
+        lstyle = mlines.Line2D([], [], color='black', ls=linestyles[i], label=label_s)
+        lstyles.append(lstyle)
+    handles = lines + lstyles
+    axs[0].legend(handles=handles, loc='upper left', ncol=2, fontsize=10)
+#    handles, labels = axs[0].get_legend_handles_labels()
+#    fig.legend(handles, labels, loc='upper right')
     return fig, axs
 
