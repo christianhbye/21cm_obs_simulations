@@ -85,7 +85,7 @@ def histogram(*args, no_bins=100):
     Each input arg is an rms array of shape (3, 3) where the row is number of params (5, 6, 7) and
     the col is orientation (0, 90, 120)
     """
-    fig, axs = plot_basic(3, 2, True, True, None, 0.1, 0.1, None, None, 400, 200, xlog=True)
+    fig, axs = plot_basic(3, 2, True, True, (12, 9), 0.1, 0.1, None, None, 400, 200, xlog=True)
     args_mk = []  # mK-converted arrays
     superd = []
     for i in range(6):
