@@ -85,18 +85,24 @@ def histogram(*args, no_bins=100):
     Each input arg is an rms array of shape (3, 3) where the row is number of params (5, 6, 7) and
     the col is orientation (0, 90, 120)
     """
-    fig, axs = plot_basic(3, 2, True, True, None, 0.1, 0.1, None, None, 300, 150, xlog=True)
-    for i, array in enumerate(args):
-        if array.max() < 10:
-            array *= 1000  # the units are definitely K, convert to mK
-        d = [array[i, j, :] for i in range(3) for j in range(3)]
-        assert len(d) == 9
-        __, bins = np.histogram(d, no_bins)
-        logbins = np.logspace(np.log10(bins[0]), np.log10(bins[-1]), len(bins))
-        colors = ['black', 'red', 'blue']
-        linestyles = ['solid', 'dashed', 'dotted']
-        Nfgs = [5, 6, 7]
-        azs = [0, 90, 120]
+    fig, axs = plot_basic(3, 2, True, True, None, 0.1, 0.1, None, None, 400, 200, xlog=True)
+    args_mk = []  # mK-converted arrays
+    superd = []
+    for i in range(6):
+        arr = args[i]
+        arr_mk = arr * 1000  # convert from K to mK
+        args_mk.append(arr_mk)
+        for j in range(3):
+            for k in range(3):
+                d = arr_mk[j, k]
+                superd.append(d)
+    __, bins = np.histogram(superd, no_bins)
+    logbins = np.logspace(np.log10(bins[0]), np.log10(bins[-1]), len(bins))
+    colors = ['black', 'red', 'blue']
+    linestyles = ['solid', 'dashed', 'dotted']
+    Nfgs = [5, 6, 7]
+    azs = [0, 90, 120]
+    for i, array in enumerate(args_mk):
         panellabel = chr(97+i) + ')'
         axs[i].text(0.95, 0.85, panellabel, transform=axs[i].transAxes)        
         for j in range(3):
@@ -113,7 +119,7 @@ def histogram(*args, no_bins=100):
         axs[i].set_title(titles[i])
     for i in range(3):
         axs[2*i].set_ylabel('Counts')
-    plt.setp(axs, ylim=(0, 1800))
+    plt.setp(axs, ylim=(0, 2200))
     lines = []
     lstyles = []
     for i in range(3):
