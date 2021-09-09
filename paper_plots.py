@@ -81,7 +81,7 @@ def beams_labels(fig, axs, derivs=False):
         label = chr(chrstart+i) + ')'
         axs[i].text(80, 50, label, color='white')
 
-def histogram(*args):
+def histogram(*args, no_bins=100):
     """
     * args must be in the order: largell, largeep, smallll, smallep, gpll, gpep (same as figs)
     Each input arg is an rms array of shape (3, 3) where the row is number of params (5, 6, 7) and
@@ -89,7 +89,27 @@ def histogram(*args):
     """
     fig, axs = plot_basic(3, 2, True, True, None, 0, 0, 15, None, 200, 100, xlog=True)
     for i, array in enumerate(args):
-        d 
-        axs[i].imshow()
-    
+        if array.max() < 10:
+            array *= 1000  # the units are definitely K, convert to mK
+        d = array.flatten()
+        hist, bins = np.hist(d, no_bins)
+        logbins = np.logspace(np.log10(bins[0]), np.log10(bins[-1]), len(bins))
+        colors = ['black', 'red', 'blue']
+        linestyles = ['solid', 'dashed', 'dotted']
+        Nfgs = [5, 6, 7]
+        azs = [0, 90, 120]
+        for j in range(3):
+            for k in range(3):
+                line_col = colors[j]
+                line_style = linestyles[k]
+                lab = r'N = {Nfgs[j]}, $\psi_0 = {azs[k]} \degree$'
+                axs[i].hist(array[j, k], bins=logbins, histtype='step', color=line_col, ls=line_style, label=lab)
+    titles = ['LinLog', 'EDGES Polynomial']
+    for i in range(2):
+        axs[-(i+1)].set_xlabel('RMS [mK]')
+        axs[i].set_title(titles[i])
+    for i in range(3):
+        axs[3*i].set_ylabel('Counts')
+    axs[0].legend()
+    return fig, axs
 
