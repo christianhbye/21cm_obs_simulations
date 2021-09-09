@@ -51,7 +51,7 @@ def beams(gain_list=None, f=None, derivs=False, aspect='equal', figsize=(6, 9), 
             vmin, vmax = -0.08, 0.08
         else:
             plot0, plot90 = gain[:, :, 0], gain[:, :, 90]
-            vmin, vmax = 0, 8.2
+            vmin, vmax = 0, 9
         im = axs[2*i].imshow(plot0, aspect=aspect, extent=extent, interpolation='none', vmin=vmin, vmax=vmax)
         im = axs[2*i+1].imshow(plot90, aspect=aspect, extent=extent, interpolation='none', vmin=vmin, vmax=vmax)
     cbar = fig.colorbar(im, ax=[axs[2*i+1] for i in range(3)])
