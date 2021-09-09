@@ -502,18 +502,26 @@ def plot2D_LSTbins(f_in, temp, lst, bin_widths=[10, 20, 30, 40, 60, 80, 120, 241
 #    plt.figure()
 #    plt.xlabel('LST [hr]')
 #    plt.ylabel('Bin Width [hr]')
-#    plt.yticks([0., 1., 2., 3., 4., 5., 6., 7., 8.], ['0', '1', '2', '3', '4', '6', '8', '12', '24'])
 #    plt.xticks([0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240], ['0', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20', '22', '24'])
 #    plt.imshow(rms_arr, aspect='auto', interpolation='none')
 #    plt.colorbar(label='RMS [mK]')
 #    plt.clim(vmin=vmin, vmax=vmax)
  #   plt.grid(which='minor')
 
-def subplot_LSTbins(rms_arr_super):
-    fig, axs = pp.plot_basic(3, 3, True, True, figsize=None, wspace=0.3, hspace=0.3, xmajor=4, xminor=1, ymajor=1, yminor=1)
+def subplot_LSTbins(rms_arr_super, vmin, vmax):
+    fig, axs = pp.plot_basic(3, 3, True, True, figsize=None, wspace=0.2, hspace=0.2, xmajor=4, xminor=1, ymajor=None, yminor=None, customy=True)
+    extent = [0, 24, 8.5, -0.5]
     for i in range(9):
-        im = axs[i].imshow(rms_arr_super[:, :, i], aspect='auto', interpolation='none', norm=LogNorm()) 
-        im.set_clim(0, 120)
+        im = axs[i].imshow(rms_arr_super[i // 3, i%3, :, :], aspect='auto', extent=extent, interpolation='none', norm=mpcolors.LogNorm()) 
+        im.set_clim(vmin, vmax)
+    cticks = [0.1, 1, 10, 50, 100, 120]
+    cbar = fig.colorbar(im, ax=axs, ticks=cticks)
+    cbar.set_label('RMS [mK]')
+    cbar.set_ticklabels([str(t) for t in cticks])
+    plt.setp(axs, yticks=np.arange(9), yticklabels=['0', '1', '2', '3', '4', '6', '8', '12', '24'])
+    for i in range(3):
+        axs[3*i].set_ylabel('Bin Width [h]')
+        axs[-(i+1)].set_xlabel('LST [h]')
     return fig, axs
 
 def add_Gaussian(f, t, width, amplitude, centre=80):
