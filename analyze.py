@@ -514,7 +514,10 @@ def subplot_LSTbins(rms_arr_super, vmin, vmax):
     for i in range(9):
         im = axs[i].imshow(rms_arr_super[i // 3, i%3, :, :], aspect='auto', extent=extent, interpolation='none', norm=mpcolors.LogNorm()) 
         im.set_clim(vmin, vmax)
-    cticks = [0.1, 1, 10, 50, 100, 120]
+    if vmax == 120:
+        cticks = [0.1, 1, 10, 50, 100, 120]
+    elif vmax == 500:
+        cticks = [0.1, 1, 10, 50, 100, 200, 300, 400, 500]
     cbar = fig.colorbar(im, ax=axs, ticks=cticks)
     cbar.set_label('RMS [mK]')
     cbar.set_ticklabels([str(t) for t in cticks])
