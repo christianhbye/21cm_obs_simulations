@@ -289,7 +289,7 @@ def plot_waterfalls_diff(f, t, l, ref_t, psi0, ref_psi0, clim=None, savepath=Non
         sp = 'plots/' + savepath + '/diff_' + str(psi0) + '_' + str(ref_psi0)
         plt.savefig(sp)
 
-def compute_rms(f, t, flow, fhigh, Nfg_array=[1, 2, 3, 4, 5, 6], frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='LINLOG'):
+def compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='EDGES_polynomial'):
     frequency_vector = f[(f >= flow) & (f <= fhigh)]
     if len(t.shape) == 2:
         temp_array = t[:, (f>=flow) & (f<=fhigh)]
@@ -355,40 +355,6 @@ def plot_rms(f, t, lst, flow=40, fhigh=120, Nfg_array=[1, 2, 3, 4, 5, 6], Nfg_sp
         plt.savefig('plots/' + gpath + loc +'/rms_plots/rms'+str(phi))
     if Nfg_split > len(Nfg_array):
         plt.show()
-
-
-def plot_rms_comparison(azimuths=[0, 30, 60, 90, 120, 150], loc='mars', ground_plane=True, simulation='edges_hb', flow=40, fhigh=120, model_type='LINLOG', Nfg=5, save=False):
-    f, l = get_ftl(0, loc=loc, ground_plane=ground_plane, simulation=simulation, return_t=False)
-    if f[0] >= 100: ## high band
-        flow = 100
-        fhigh = 190
-    print(f.shape)
-    print(l.shape)
-    plt.figure()
-    for i, azimuth in enumerate(azimuths):
-        t = get_ftl(azimuth, loc=loc, ground_plane=ground_plane, simulation=simulation, return_fl=False)
-        print(t.shape)
-        rms = compute_rms(f, t, flow, fhigh, Nfg_array = [Nfg], model_type=model_type)[0]
-        plt.plot(l, rms, label=r'$\phi$ = {}'.format(azimuth))
-    plt.legend()
-    plt.xlabel('LST (hours)')
-    plt.ylabel('RMS (Kelvin)')
-    plt.title(r'RMS (${} \leq \nu \leq {}$) vs LST for {:d}-term fit'.format(flow, fhigh, Nfg))
-    plt.xlim(np.min(l)-0.5, np.max(l)+0.5)
-    if save:
-        if ground_plane:
-            g1 = 'inf_metal_ground_plane/'
-            if simulation == 'edges_hb':
-                g2 = 'EDGES_highband/'
-            elif simulation == 'edges_lb':
-                g2 = 'EDGES_lowband/'
-            elif simulation == 'FEKO':
-                g2 = 'FEKO_simulation' 
-            gpath = g1 + g2
-        else:
-            gpath = 'no_ground_plane/'
-        plt.savefig('plots/' + gpath + loc +'/rms_plots/rms_comparison')
-    plt.show()
 
 def plot_residuals(f, t, l, azimuth=0, lst_for_plot=[0, 6, 12, 18], flow=40, fhigh=120, Nfg_array=[5, 6], model_type='LINLOG', savepath=None, ylim=None, textloc=None):
     # plots for five-term fit and six-term fit
