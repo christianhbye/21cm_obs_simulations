@@ -193,7 +193,7 @@ def polar_beam(gain_list=None, f=None, figsize=None):
             axs[i, 1].plot(el, gain90, label='{:d} MHz'.format(int(f[find])))  # phi = 90 
 #    axs[0, 0].legend(loc='upper left')
     handles, labels = axs[-1, -1].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='center right', prop={'size': 10}, bbox_to_anchor=(1.05, 0.5))
+    fig.legend(handles, labels, prop={'size': 10}, loc='upper center', bbox_to_anchor=(0.5, 0.1), ncol=3)
     plt.setp(axs, rmax=9, rticks=[1, 2, 3, 4, 5, 6, 7, 8, 9])
     thetas = [-90, -45, 0, 45, 90]
     tticks = [np.deg2rad(t) for t in thetas]
