@@ -234,7 +234,7 @@ def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, savepath=None
     if savepath:
         plt.savefig('plots/' + savepath + '/temp')
 
-def plot_temp_3d(freq_vector, lst_vector, temp_array_N, temp_array_S, psi0=0, savepath=None):   
+def plot_temp_3d(freq_vector, lst_vector, temp_array_N, temp_array_S):   
     fig, axs = pp.plot_basic(2, 1, True, True, (5, 5), 0, 0.1, 10, 5, None, None, customy=True)
     if freq_vector[0] > 1e6:
         freq_vector /= 1e6 # convert to MHz
@@ -266,9 +266,7 @@ def plot_temp_3d(freq_vector, lst_vector, temp_array_N, temp_array_S, psi0=0, sa
 #    plt.setp(axs, yaxis.set_minor_locator(MultipleLocator(1))
     axs[0].tick_params(axis='x', which='minor', bottom=False)
     axs[1].tick_params(axis='x', which='minor', bottom=False)
-    if savepath:
-        sp = 'plots/' + savepath + '/temp3d'
-        plt.savefig(sp)
+    return fig, axs
 
 def plot_waterfalls_diff(f, t, l, ref_t, psi0, ref_psi0, clim=None, savepath=None):
     dt = t - ref_t
