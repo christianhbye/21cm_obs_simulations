@@ -6,7 +6,7 @@ import numpy as np
 import analyze as a
 import general as gen
 
-def plot_basic(nrows, ncols, sharex, sharey, figsize,  wspace, hspace, xmajor, xminor, ymajor, yminor, xlog=False):
+def plot_basic(nrows, ncols, sharex, sharey, figsize,  wspace, hspace, xmajor, xminor, ymajor, yminor, xlog=False, customy=False):
     fig = plt.figure(figsize=figsize, constrained_layout=False)
     spec = gridspec.GridSpec(ncols=ncols, nrows=nrows, left=None, right=None, wspace=wspace, hspace=hspace, figure=fig)
     axs = []
@@ -16,13 +16,24 @@ def plot_basic(nrows, ncols, sharex, sharey, figsize,  wspace, hspace, xmajor, x
             if not xlog:
                 ax.xaxis.set_major_locator(MultipleLocator(xmajor))
                 ax.xaxis.set_minor_locator(MultipleLocator(xminor))
-            ax.yaxis.set_major_locator(MultipleLocator(ymajor))
-            ax.yaxis.set_minor_locator(MultipleLocator(yminor))
+            if not customy:
+                ax.yaxis.set_major_locator(MultipleLocator(ymajor))
+                ax.yaxis.set_minor_locator(MultipleLocator(yminor))
             if sharex and i < nrows - 1:
                 ax.label_outer()  # hide xticklabels on all but bottom row if sharex
             if sharey and j > 0:
                 ax.label_outer()
             axs.append(ax)
+    return fig, axs
+
+def plot_polar(figsize, nrows=3, ncols=2, sharex=True, sharey=True, wspace=0, hspace=0):
+    fig, axs = plt.subplots(figsize, nrows=nrows, ncols=ncols, subplot_kw={'projection':'polar'}, gridspec_kw={'wspace': wspace, 'hspace': hspace})
+#    spec = gridspec.GridSpec(ncols=ncols, nrows=nrows, wspace=wspace, hspace=hspace, figure=fig)
+ #   axs = []
+ #   for i in range(nrows):
+ #       for j in range(ncols):
+ #           ax = fig.add_subplot(spec[i, j])
+ #           axs.append(ax)
     return fig, axs
 
 def beams(gain_list=None, f=None, derivs=False, aspect='equal', figsize=(6, 9), xmajor=30, xminor=15, ymajor=20, yminor=10):
