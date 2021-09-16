@@ -7,6 +7,19 @@ import matplotlib.colors as mpcolors
 from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
 import paper_plots as pp
 
+SMALL_SIZE = 8
+MEDIUM_SIZE = 10
+BIGGER_SIZE = 12
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
+
 def read_hdf5(azimuth, varname, loc, sweep_lat=None, ground_plane=True, simulation='edges_hb'):
     parent_path = '/scratch/s/sievers/cbye/21cm_obs_simulations/'
     if ground_plane:
@@ -191,7 +204,7 @@ def polar_beam(gain_list=None, f=None, figsize=None):
             gain90 = np.concatenate((reverse90, phi90))
             axs[i, 1].plot(el, gain90, label='{:d} MHz'.format(int(f[find])))  # phi = 90 
     handles, labels = axs[-1, -1].get_legend_handles_labels()
-    fig.legend(handles, labels, prop={'size': 10}, loc='upper center', bbox_to_anchor=(0.5, 0.1), ncol=3)
+    fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, 0.1), ncol=3)
     for ax in axs.flatten():
         ax.set_rgrids([1, 2, 3, 4, 5, 6, 7, 8, 9], [' ', '2', ' ', '4', ' ', '6', ' ', '8', ' '], angle=22.5)
     thetas = [-90, -45, 0, 45, 90]
