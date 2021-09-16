@@ -174,7 +174,6 @@ def polar_beam(gain_list=None, f=None, figsize=None):
         f /= 1e6  # convert to MHz
     find_to_plot = np.arange(0, 82, 10)  # list of frequency indices to plot gain cuts for
     fig, axs = plt.subplots(figsize=figsize, nrows=3, ncols=2, subplot_kw={'projection': 'polar'}, gridspec_kw={'wspace':0, 'hspace':0})
-    #fig, axs = pp.plot_polar(figsize)
     plt.setp(axs, theta_zero_location='N')
     plt.setp(axs, thetamin=-90, thetamax=90)
     el = np.deg2rad(np.arange(-91, 91))
@@ -191,17 +190,16 @@ def polar_beam(gain_list=None, f=None, figsize=None):
             reverse90 = np.flip(phi90)
             gain90 = np.concatenate((reverse90, phi90))
             axs[i, 1].plot(el, gain90, label='{:d} MHz'.format(int(f[find])))  # phi = 90 
-#    axs[0, 0].legend(loc='upper left')
     handles, labels = axs[-1, -1].get_legend_handles_labels()
     fig.legend(handles, labels, prop={'size': 10}, loc='upper center', bbox_to_anchor=(0.5, 0.1), ncol=3)
-    plt.setp(axs, rmax=9, rticks=[1, 2, 3, 4, 5, 6, 7, 8, 9])
+    for ax in axs.flatten():
+        ax.set_rgrids([1, 2, 3, 4, 5, 6, 7, 8, 9], [' ', '2', ' ', '4', ' ', '6', ' ', '8', ' '], angle=22.5)
     thetas = [-90, -45, 0, 45, 90]
     tticks = [np.deg2rad(t) for t in thetas]
     tlabels = [r'${:d} \degree$'.format(int(np.abs(t))) for t in thetas]
     plt.setp(axs, xticks=tticks, xticklabels=tlabels)
     axs[0, 0].set_title(r'$\phi=0 \degree$')
     axs[0, 1].set_title(r'$\phi=90 \degree$')
-   # plt.tight_layout()
     if return_gain:
         return rgain_list, f, fig, axs
     else:
