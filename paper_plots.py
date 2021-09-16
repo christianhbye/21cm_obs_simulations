@@ -6,14 +6,26 @@ import numpy as np
 import analyze as a
 import general as gen
 
-def plot_basic(nrows, ncols, sharex, sharey, figsize,  wspace, hspace, xmajor, xminor, ymajor, yminor, xlog=False, customy=False):
+SMALL_SIZE = 10
+MEDIUM_SIZE = 12
+BIGGER_SIZE = 14
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
+def plot_basic(nrows, ncols, sharex, sharey, figsize,  wspace, hspace, xmajor, xminor, ymajor, yminor, customx=False, customy=False):
     fig = plt.figure(figsize=figsize, constrained_layout=False)
     spec = gridspec.GridSpec(ncols=ncols, nrows=nrows, left=None, right=None, wspace=wspace, hspace=hspace, figure=fig)
     axs = []
     for i in range(nrows):
         for j in range(ncols):
             ax = fig.add_subplot(spec[i, j])
-            if not xlog:
+            if not customx:
                 ax.xaxis.set_major_locator(MultipleLocator(xmajor))
                 ax.xaxis.set_minor_locator(MultipleLocator(xminor))
             if not customy:
@@ -24,16 +36,6 @@ def plot_basic(nrows, ncols, sharex, sharey, figsize,  wspace, hspace, xmajor, x
             if sharey and j > 0:
                 ax.label_outer()
             axs.append(ax)
-    return fig, axs
-
-def plot_polar(figsize, nrows=3, ncols=2, sharex=True, sharey=True, wspace=0, hspace=0):
-    fig, axs = plt.subplots(figsize, nrows=nrows, ncols=ncols, subplot_kw={'projection':'polar'}, gridspec_kw={'wspace': wspace, 'hspace': hspace})
-#    spec = gridspec.GridSpec(ncols=ncols, nrows=nrows, wspace=wspace, hspace=hspace, figure=fig)
- #   axs = []
- #   for i in range(nrows):
- #       for j in range(ncols):
- #           ax = fig.add_subplot(spec[i, j])
- #           axs.append(ax)
     return fig, axs
 
 def beams(gain_list=None, f=None, derivs=False, aspect='equal', figsize=(6, 9), xmajor=30, xminor=15, ymajor=20, yminor=10):
@@ -89,6 +91,43 @@ def beams_labels(fig, axs, derivs=False):
     for i in range(6):
         label = chr(chrstart+i) + ')'
         axs[i].text(80, 50, label, color='white')
+
+def plot_rms(rms_arr, figsize=(9, 6), north=True):
+    """
+    rms arr is an array with first axis is different antenna, second is different model,
+    and third axis is for different azimuths: 0, 90, 120
+    """
+    if north:
+        chrstart = 97
+        llmax, epmax = 900, 130
+        llmajor, llminor, epmajor, epminor = 200, 100, 30, 15
+    else:
+        chrstart = 103
+        llmax, epmax = 4000, 500
+        llmajor, llminor, epmajor, epminor = 1000, 500, 100, 50 
+    __, __, lst = a.get_ftl(0)
+    azs = [0, 90, 120]
+    fig, axs = plt.subplots(nrows=3, ncols=2, sharex=True, sharey='col', figsize=figsize, gridspec_kw={'hspace':0.15, 'wspace':0.15})
+    for i in range(3):
+        for j in range(2):
+            for k in range(3):
+                axs[i, j].plot(lst, rms_arr[i, j, k], label=r'$\psi_0 = {} \degree$'.format(azs[k]))
+    for i in range(3):
+        axs[i, 0].text(22, 8/9*llmax, chr(chrstart+2*i)+')')
+        axs[i, 1].text(22, 8/9*epmax, chr(chrstart+2*i+1)+')')
+        axs[i, 0].set_ylabel('RMS [mK]')
+    for i in range(2):
+        axs[-1, i].set_xlabel('LST [h]')
+    axs[0,1].legend(loc='upper center')
+    axs[0,0].yaxis.set_major_locator(MultipleLocator(llmajor))
+    axs[0,0].yaxis.set_minor_locator(MultipleLocator(llminor))
+    axs[0,0].set_ylim(0, llmax)
+    axs[0,1].yaxis.set_major_locator(MultipleLocator(epmajor))
+    axs[0,1].yaxis.set_minor_locator(MultipleLocator(epminor))
+    axs[0,1].set_ylim(0, epmax)
+    plt.setp(axs, xticks=[0,2,4,6,8,10,12,14,16,18,20,22,24], xlim=(0,24))
+    
+    return fig, axs
 
 def histogram(*args, no_bins=100):
     """
