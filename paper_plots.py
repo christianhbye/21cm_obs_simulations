@@ -126,7 +126,6 @@ def plot_rms(rms_arr, figsize=(9, 6), north=True):
     axs[0,1].yaxis.set_minor_locator(MultipleLocator(epminor))
     axs[0,1].set_ylim(0, epmax)
     plt.setp(axs, xticks=[0,2,4,6,8,10,12,14,16,18,20,22,24], xlim=(0,24))
-    
     return fig, axs
 
 def histogram(*args, no_bins=100):
