@@ -7,9 +7,9 @@ import matplotlib.colors as mpcolors
 from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
 import paper_plots as pp
 
-SMALL_SIZE = 8
-MEDIUM_SIZE = 10
-BIGGER_SIZE = 12
+SMALL_SIZE = 10
+MEDIUM_SIZE = 12
+BIGGER_SIZE = 14
 
 plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
 plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
@@ -234,22 +234,38 @@ def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, savepath=None
     if savepath:
         plt.savefig('plots/' + savepath + '/temp')
 
-def plot_temp_3d(freq_vector, temp_array, lst_vector, psi0, clim=None, savepath=None):   
-    plt.figure()
+def plot_temp_3d(freq_vector, lst_vector, temp_array_N, temp_array_S, psi0=0, savepath=None):   
+    fig, axs = pp.plot_basic(2, 1, True, True, (5, 5), 0, 0.1, 10, 5, None, None, customy=True)
     if freq_vector[0] > 1e6:
         freq_vector /= 1e6 # convert to MHz
     freq_min = freq_vector[0]
     freq_max = freq_vector[-1]
     LST_min = lst_vector[0]
     LST_max = lst_vector[-1]
-    plt.imshow(temp_array, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min], interpolation='none')
-    plt.title('Antenna Temperature \n' r'$\psi_0 = {}$'.format(psi0))
-    plt.ylabel('LST')
-    plt.xlabel('Frequency [MHz]')
-    if clim:
-        plt.clim(clim)
-    cbar = plt.colorbar()
-    cbar.set_label("Antenna Temperature [K]")
+    im = axs[0].imshow(temp_array_N, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min], interpolation='none')
+    nticks = [0, 2000, 4000, 6000, 8000, 10000]
+    sticks = [0, 5000, 10000, 15000, 20000]
+    cbarN = fig.colorbar(im, ax=axs[0], ticks=nticks)
+    cbarN.set_ticklabels([str(t)+' K' for t in nticks])
+   # cbarN.set_label("Antenna Temperature [K]")
+    im.set_clim(0, 10000)
+    im2 = axs[1].imshow(temp_array_S, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min], interpolation='none')
+    cbarS = fig.colorbar(im2, ax=axs[1], ticks=sticks)
+    cbarS.set_ticklabels([str(t)+' K' for t in sticks])
+   # cbarS.set_label("Antenna Temperature [K]")
+    im2.set_clim(0, 20000)
+    plt.suptitle('Antenna Temperature')
+    plt.setp(axs, ylabel='LST [h]')
+    axs[1].set_xlabel('Frequency [MHz]')
+    axs[0].text(115, 2, 'a)', color='white')
+    axs[1].text(115, 2, 'b)', color='white')
+    yticks = [0, 4, 8, 12, 16, 20, 24]
+   # locs = [10*t for t in yticks]
+  #  locs[-1] = 241
+    plt.setp(axs, yticks=yticks)
+#    plt.setp(axs, yaxis.set_minor_locator(MultipleLocator(1))
+    axs[0].tick_params(axis='x', which='minor', bottom=False)
+    axs[1].tick_params(axis='x', which='minor', bottom=False)
     if savepath:
         sp = 'plots/' + savepath + '/temp3d'
         plt.savefig(sp)
