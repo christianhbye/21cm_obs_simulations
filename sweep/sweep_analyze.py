@@ -3,8 +3,22 @@ import paper_plots as pp
 import matplotlib.pyplot as plt
 import matplotlib.colors as mpcolors
 from matplotlib.lines import Line2D
+from matplotlib.ticker import MultipleLocator
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
+
+SMALL_SIZE = 10
+MEDIUM_SIZE = 12
+BIGGER_SIZE = 14
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
 
 def reverse_and_shift(array, return_ind=False):
     '''Currently we have lst in increasing order 0-24 hrs,
@@ -78,7 +92,7 @@ def rms_sweep(ground_plane, simulation, azimuth=0, model='EDGES_polynomial', Nfg
 def rmsvslat(models=['LINLOG', 'EDGES_polynomial'], azimuths=[0, 90, 120], halfstarts=None):
     antennas = ['old_MIST', 'new_MIST', 'mini_MIST']
     models=['LINLOG', 'EDGES_polynomial']
-    fig, axs = plt.subplots(nrows=3, ncols=len(models), sharex=True, sharey='col')
+    fig, axs = plt.subplots(figsize=(10,5), nrows=3, ncols=len(models), sharex=True, sharey='col', gridspec_kw={'hspace':0.15, 'wspace':0.15})
     lats = np.linspace(90, -90, 121)
     for i, antenna in enumerate(antennas):
         axs[i, 0].set_ylabel('RMS [mK]')
@@ -94,12 +108,23 @@ def rmsvslat(models=['LINLOG', 'EDGES_polynomial'], azimuths=[0, 90, 120], halfs
                     halfstart = None
                 rms = rms_sweep(ground_plane, antenna, az, model, Nfg=6, avg=True, halfstart=halfstart)
                 rms *= 1000
-                axs[i, k].plot(rms, label=r'$\psi_0={:d} \degree$'.format(az))
+                axs[i, k].plot(lats, rms, label=r'$\psi_0={:d} \degree$'.format(az))
     axs[2, 0].set_xlabel('Latitude [deg]')
     axs[2, 1].set_xlabel('Latitude [deg]')
-    axs[0, 1].legend(loc='upper right')
+    axs[0, 1].legend(loc='upper left')
    # handles, labels = axs[0, 0].get_legend_handles_labels()
    # fig.legend(handles, labels, loc='upper center')
+    axs[0,0].xaxis.set_major_locator(MultipleLocator(30))
+    axs[0,0].xaxis.set_minor_locator(MultipleLocator(15))
+    axs[0,0].yaxis.set_major_locator(MultipleLocator(50))
+    axs[0,0].yaxis.set_minor_locator(MultipleLocator(25))
+    axs[0,1].yaxis.set_major_locator(MultipleLocator(10))
+    axs[0,1].yaxis.set_minor_locator(MultipleLocator(5))
+    axs[0,0].set_ylim(0,250)
+    axs[0,1].set_ylim(0,50)
+    for i in range(3):
+        axs[i, 0].text(11/12*180-90, 8/9*250, chr(97+2*i)+')')
+        axs[i, 1].text(11/12*180-90, 8/9*50, chr(97+2*i+1)+')')
     return fig, axs
 
 def get_hist(antenna_type, model, Nfg_array=[5, 6, 7], azimuths=[0, 90, 120], no_bins=100):
