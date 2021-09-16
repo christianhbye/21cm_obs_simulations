@@ -552,7 +552,7 @@ def add_EDGESsignal(f, t, tau, amplitude):
     newt += signal
     return newt
 
-def gaussian_rms(f, t, width_arr=None, amplitude_arr=None, centre=80, model='LINLOG', Nfg=5, flow=40, fhigh=120, vmin=0, vmax=None, log10=False, plot=True):
+def gaussian_rms(f, t, width_arr=None, amplitude_arr=None, centre=80, model='EDGES_polynomial', Nfg=6, flow=40, fhigh=120, vmin=0, vmax=None, log10=False, plot=False):
     if width_arr is None:
         width_arr = np.linspace(0, 50, 201)
     if amplitude_arr is None:
@@ -586,7 +586,7 @@ def gaussian_rms(f, t, width_arr=None, amplitude_arr=None, centre=80, model='LIN
         cbar.set_label(cbarlabel)
         plt.clim(vmin, vmax)
 
-def EDGES_rms(f, t, tau_arr=None, amplitude_arr=None, model='LINLOG', Nfg=5, flow=40, fhigh=120, vmin=0, vmax=None, log10=False, plot=True):
+def EDGES_rms(f, t, tau_arr=None, amplitude_arr=None, model='EDGES_polynomial', Nfg=6, flow=40, fhigh=120, vmin=0, vmax=None, log10=False, plot=False):
     if tau_arr is None:
         tau_arr = np.linspace(0, 30, 121)
     if amplitude_arr is None:
@@ -617,39 +617,54 @@ def EDGES_rms(f, t, tau_arr=None, amplitude_arr=None, model='LINLOG', Nfg=5, flo
         cbar.set_label(cbarlabel)
         plt.clim(vmin, vmax)
 
-def plot_gauss_edges(gauss40, gauss80, gauss120, edges, log10=True, vmin=None, vmax=None):
-    input = [gauss80, edges, gauss40, gauss120]
+def plot_gauss_edges(gauss40, gauss80, gauss120, edges, log10=True, vmin=1, vmax=150):
+    """
+    each input is an array where the first axis is the antenna type and the second is the latitude
+    """
+    input = [gauss40, gauss80, gauss120, edges]
     amplitude_arr = np.linspace(-1, 0, 201)
     width_arr = np.linspace(0, 50, 201)
     tau_arr = np.linspace(0, 30, 121)
-    fig, axs = plt.subplots(nrows=2, ncols=2, sharex=True)
+    fig, axs = plt.subplots(figsize=(12,8), nrows=6, ncols=4, sharex=True, sharey='col', gridspec_kw={'hspace':0.15, 'wspace':0.2})
     if log10:
         norm = mpcolors.LogNorm()
     else:
         norm = None
-    for i, ax in enumerate(axs.flatten()):
-        left, right = 1000*amplitude_arr.max(), 1000*amplitude_arr.min()
-        if not i == 1:
-            top, bottom = width_arr.max(), width_arr.min()
-            ylab = 'FWHM [MHz]'
-        else:
-             top, bottom = tau_arr.max(), tau_arr.min()
-             ylab = r'$\tau$'
-        im = ax.imshow(input[i], aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
-        if i > 1:
-            ax.set_xlabel('A [mK]')
-        ax.set_ylabel(ylab)
-    axs[0,0].text(-900, 45, 'a)')
-    axs[0,1].text(-900, 27, 'b)')
-    axs[1,0].text(-900, 45, 'c)')
-    axs[1,1].text(-900, 45, 'd)')
-    axs[0, 0].scatter(-100, 25, facecolors='none', edgecolors='white')
-    axs[0, 1].scatter(-500, 7, facecolors='none', edgecolors='white')
-    cbar = fig.colorbar(im, ax=axs.ravel(), location='right', ticks=[1, 10, 50, 100, 200])
-    cbar.set_ticklabels(['1', '10', '50', '100', '200'])
-    if vmin is None:
-        vmin = 0.9 * np.min([np.min(r[:-1, :]) for r in input])
-    im.set_clim(vmin, vmax)
+    left, right = -1*1000*amplitude_arr.max(), -1*1000*amplitude_arr.min()
+    for i in range(2):  # latitude
+        for j in range(3):   # antenna
+            for k in range(4):  # signal type
+                if not k == 3:
+                    top, bottom = width_arr.max(), width_arr.min()
+                    ypos = 40
+                    xc, yc = 100, 25
+                else:
+                    top, bottom = tau_arr.max(), tau_arr.min()
+                    ypos = 24
+                    xc, yc = 500, 7
+                signal = input[k]
+                im = axs[3*i+j, k].imshow(signal[j, i], aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
+                im.set_clim(vmin, vmax)
+                if i == 0 and j == 0:
+                    axs[3*i+j, k].text(800, ypos, chr(97+k+4*j+12*i)+')', color='white')
+                    axs[3*i+j, k].scatter(xc, yc, facecolors='none', edgecolors='white')
+   # for i in range(4):
+   #     axs[-1, i].set_xlabel('A [mK]')
+   # for i in range(6):
+   #     axs[i, 0].set_ylabel('FWHM [MHz]')
+   #     axs[i, 3].set_ylabel(r'$\tau$')
+    cbar = fig.colorbar(im, ax=axs.ravel(), location='right', ticks=[1, 10, 50, 100, 150])
+    cbar.set_ticklabels(['1', '10', '50', '100', '150'])
+   # fig.text(0.5, 0.04, 'A [mK]')
+   # fig.text(0.04, 0.5, 'FWHM [MHz]')
+   # axs[2, -1].set_ylabel(r'$\tau$')
+    axs[0,0].xaxis.set_major_locator(MultipleLocator(250))
+    axs[0,0].xaxis.set_minor_locator(MultipleLocator(125))
+    for i in range(3):
+        axs[0, i].yaxis.set_major_locator(MultipleLocator(25))
+        axs[0, i].yaxis.set_minor_locator(MultipleLocator(12.5))
+    axs[0, -1].yaxis.set_major_locator(MultipleLocator(10))
+    return fig, axs
 
 def save_all_plots(loc='mars', ground_plane=True, simulation='edges_hb'):
 #    azimuths = [0, 30, 60, 90, 120, 150]
