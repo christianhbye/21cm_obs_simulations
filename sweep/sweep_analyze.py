@@ -122,6 +122,7 @@ def rmsvslat(models=['LINLOG', 'EDGES_polynomial'], azimuths=[0, 90, 120], halfs
     axs[0,1].yaxis.set_minor_locator(MultipleLocator(5))
     axs[0,0].set_ylim(0,250)
     axs[0,1].set_ylim(0,50)
+    axs[0,0].set_xlim(-90,90)
     for i in range(3):
         axs[i, 0].text(11/12*180-90, 8/9*250, chr(97+2*i)+')')
         axs[i, 1].text(11/12*180-90, 8/9*50, chr(97+2*i+1)+')')
