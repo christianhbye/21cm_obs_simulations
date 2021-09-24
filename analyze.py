@@ -12,7 +12,7 @@ MEDIUM_SIZE = 12
 BIGGER_SIZE = 14
 
 plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('axes', titlesize=BIGGER_SIZE)     # fontsize of the axes title
 plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
 plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
@@ -173,6 +173,58 @@ def plot_all_beams(gain_list=None, f=None, derivs=False):
 
 
 def polar_beam(gain_list=None, f=None, figsize=None):
+    return_gain = False
+    if not gain_list:
+        f, az, el, __, __, gain_large = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
+        f_s, az_s, el_s, __, __, gain_small = gen.read_beam_FEKO('no_git_files/blade_dipole_MARS.out', 0)
+        f_gp, az_gp, el_gp, __, __, gain_gp = gen.read_beam_FEKO('no_git_files/mini_mist_blade_dipole_3_groundplane_no_boxes.out', 0)
+        assert f.all() == f_s.all()
+        assert f.all() == f_gp.all()
+        gain_list = [gain_large, gain_small, gain_gp]
+        rgain_list = [gain_large.copy(), gain_small.copy(), gain_gp.copy()]
+        return_gain = True
+    if f[0] >= 1e6:  # units is Hz
+        f /= 1e6  # convert to MHz
+    find_to_plot = np.arange(0, 82, 10)  # list of frequency indices to plot gain cuts for
+    fig = plt.figure(figsize=figsize)
+    dx, dy = 0.8, 0.8  # panel width and height
+    axs = []
+    el = np.deg2rad(np.arange(-91, 91))
+    for i, gain in enumerate(gain_list):  # loop over rows / antenna models
+        if gain.shape[-1] == 361:
+            gain = gain[:, :, :-1] # cut last angle since 0 = 360 degrees
+        gain = gain[:, ::-1, :] # changing from elevation to theta
+        ax1 = fig.add_axes([0, -i*dy, dx, dy], polar=True, label=str(i)+'1')
+        axs.append(ax1)
+        ax2 = fig.add_axes([0.7*dx, -i*dy, dx, dy], polar=True, label=str(i)+'2')
+        axs.append(ax2)
+        for j, find in enumerate(find_to_plot):  # loop over the frequencies to plot gain for in each panel
+            phi0 = gain[find, :, 0]  # phi = 0
+            reverse0 = np.flip(phi0)
+            gain0 = np.concatenate((reverse0, phi0))
+            ax1.plot(el, gain0, label='{:d} MHz'.format(int(f[find])), linewidth=0.75)  # phi = 0 
+            phi90 = gain[find, :, 90]  # phi = 90
+            reverse90 = np.flip(phi90)
+            gain90 = np.concatenate((reverse90, phi90))
+            ax2.plot(el, gain90, label='{:d} MHz'.format(int(f[find])), linewidth=0.75)  # phi = 90
+    plt.setp(axs, theta_zero_location='N')
+    plt.setp(axs, thetamin=-90, thetamax=90)
+    handles, labels = axs[-1].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.7*dx, -2*dy), ncol=3)
+    for ax in axs:
+        ax.set_rgrids([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], ['0', ' ', '2', ' ', '4', ' ', '6', ' ', '8', ' '], angle=22.5)
+    thetas = [-90, -45, 0, 45, 90]
+    tticks = [np.deg2rad(t) for t in thetas]
+    tlabels = [r'${:d} \degree$'.format(int(np.abs(t))) for t in thetas]
+    plt.setp(axs, xticks=tticks, xticklabels=tlabels)
+    axs[0].set_title(r'$\phi=0 \degree$')
+    axs[1].set_title(r'$\phi=90 \degree$')
+    if return_gain:
+        return rgain_list, f, fig, axs
+    else:
+        return fig, axs
+
+def polar_beam_old(gain_list=None, f=None, figsize=None):
     return_gain = False
     if not gain_list:
         f, az, el, __, __, gain_large = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
