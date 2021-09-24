@@ -18,13 +18,13 @@ plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
-def plot_basic(nrows, ncols, sharex, sharey, figsize,  wspace, hspace, xmajor, xminor, ymajor, yminor, customx=False, customy=False):
+def plot_basic(nrows, ncols, sharex, sharey, figsize, xmajor, xminor, ymajor, yminor, dx=0.8, dy=0.8, hspace=1, vspace=1, customx=False, customy=False):
     fig = plt.figure(figsize=figsize, constrained_layout=False)
-    spec = gridspec.GridSpec(ncols=ncols, nrows=nrows, left=None, right=None, wspace=wspace, hspace=hspace, figure=fig)
+#    spec = gridspec.GridSpec(ncols=ncols, nrows=nrows, left=None, right=None, wspace=wspace, hspace=hspace, figure=fig)
     axs = []
     for i in range(nrows):
         for j in range(ncols):
-            ax = fig.add_subplot(spec[i, j])
+            ax = fig.add_axes([hspace*j*dx, -vspace*i*dy, dx, dy], label=str(i)+str(j))
             if not customx:
                 ax.xaxis.set_major_locator(MultipleLocator(xmajor))
                 ax.xaxis.set_minor_locator(MultipleLocator(xminor))
@@ -32,14 +32,16 @@ def plot_basic(nrows, ncols, sharex, sharey, figsize,  wspace, hspace, xmajor, x
                 ax.yaxis.set_major_locator(MultipleLocator(ymajor))
                 ax.yaxis.set_minor_locator(MultipleLocator(yminor))
             if sharex and i < nrows - 1:
-                ax.label_outer()  # hide xticklabels on all but bottom row if sharex
+#                ax.label_outer()  # hide xticklabels on all but bottom row if sharex
+                 ax.set_xticklabels([])
             if sharey and j > 0:
-                ax.label_outer()
+#                ax.label_outer()
+                 ax.set_yticklabels([])
             axs.append(ax)
     return fig, axs
 
-def beams(gain_list=None, f=None, derivs=False, aspect='equal', figsize=(6, 9), xmajor=30, xminor=15, ymajor=20, yminor=10):
-    fig, axs = plot_basic(3, 2, True, True, figsize, 0, 0.2, xmajor, xminor, ymajor, yminor)
+def beams(gain_list=None, f=None, derivs=False, aspect='equal', figsize=None, xmajor=30, xminor=15, ymajor=20, yminor=10):
+    fig, axs = plot_basic(3, 2, True, True, figsize, xmajor, xminor, ymajor, yminor, dx=0.8, dy=0.8, hspace=0.9, vspace=1.1)
     return_gain = False
     if not gain_list:
         return_gain = True
@@ -69,28 +71,26 @@ def beams(gain_list=None, f=None, derivs=False, aspect='equal', figsize=(6, 9), 
         im = axs[2*i+1].imshow(plot90, aspect=aspect, extent=extent, interpolation='none', vmin=vmin, vmax=vmax)
     cbar = fig.colorbar(im, ax=[axs[2*i+1] for i in range(3)])
     im.set_clim(vmin, vmax)
-    if return_gain:
-        return fig, axs, toreturn_gain, f
-    else:
-        return fig, axs
-
-def beams_labels(fig, axs, derivs=False):
-    axs[0].set_title(r'$\phi=0 \degree$')
-    axs[1].set_title(r'$\phi=90 \degree$')
+    axs[0].set_title(r'$\phi=0 \degree$', fontsize=MEDIUM_SIZE)
+    axs[1].set_title(r'$\phi=90 \degree$', fontsize=MEDIUM_SIZE)
     if derivs:
-        title = 'Derivative'
+        title = 'Derivative [1/MHz]'
         chrstart = 103
     else:
-        title = 'Gain'
+        title = 'Gain [linear units]'
         chrstart = 97  # a
-    fig.suptitle(title)
+    fig.suptitle(title, x=0.72, y=1.)
     for i in range(3):
         axs[2*i].set_ylabel(r'$\nu$ [MHz]')
     for i in range(2):
         axs[-(i+1)].set_xlabel(r'$\theta$ [deg]')
     for i in range(6):
         label = chr(chrstart+i) + ')'
-        axs[i].text(80, 50, label, color='white')
+        axs[i].text(80, 50, label, color='white', fontsize=MEDIUM_SIZE)
+    if return_gain:
+        return fig, axs, toreturn_gain, f
+    else:
+        return fig, axs
 
 def plot_rms(rms_arr, figsize=(9, 6), north=True):
     """
