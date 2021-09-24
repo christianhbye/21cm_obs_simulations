@@ -70,6 +70,8 @@ def beams(gain_list=None, f=None, derivs=False, aspect='equal', figsize=None, xm
         im = axs[2*i].imshow(plot0, aspect=aspect, extent=extent, interpolation='none', vmin=vmin, vmax=vmax)
         im = axs[2*i+1].imshow(plot90, aspect=aspect, extent=extent, interpolation='none', vmin=vmin, vmax=vmax)
     cbar = fig.colorbar(im, ax=[axs[2*i+1] for i in range(3)])
+    if derivs:
+        cbar.set_ticks(np.linspace(-0.07, 0.07, 15))
     im.set_clim(vmin, vmax)
     axs[0].set_title(r'$\phi=0 \degree$', fontsize=MEDIUM_SIZE)
     axs[1].set_title(r'$\phi=90 \degree$', fontsize=MEDIUM_SIZE)
