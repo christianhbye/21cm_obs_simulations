@@ -288,8 +288,8 @@ def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, savepath=None
     if savepath:
         plt.savefig('plots/' + savepath + '/temp')
 
-def plot_temp_3d(freq_vector, lst_vector, temp_array_N, temp_array_S):   
-    fig, axs = pp.plot_basic(2, 1, True, True, (5, 5), 0, 0.1, 10, 5, None, None, customy=True)
+def plot_temp_3d(freq_vector, lst_vector, temp_array_N, temp_array_S, figsize=None):   
+    fig, axs = pp.plot_basic(2, 1, True, True, figsize, 10, 5, None, None, dx=0.8, dy=0.8, vspace=1.1, customy=True)
     if freq_vector[0] > 1e6:
         freq_vector /= 1e6 # convert to MHz
     freq_min = freq_vector[0]
@@ -300,19 +300,18 @@ def plot_temp_3d(freq_vector, lst_vector, temp_array_N, temp_array_S):
     nticks = [0, 2000, 4000, 6000, 8000, 10000]
     sticks = [0, 5000, 10000, 15000, 20000]
     cbarN = fig.colorbar(im, ax=axs[0], ticks=nticks)
-    cbarN.set_ticklabels([str(t)+' K' for t in nticks])
-   # cbarN.set_label("Antenna Temperature [K]")
+    cbarN.set_ticklabels([str(t) for t in nticks])
+    cbarN.set_label("[K]", rotation=0, labelpad=15)
     im.set_clim(0, 10000)
     im2 = axs[1].imshow(temp_array_S, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min], interpolation='none')
     cbarS = fig.colorbar(im2, ax=axs[1], ticks=sticks)
-    cbarS.set_ticklabels([str(t)+' K' for t in sticks])
-   # cbarS.set_label("Antenna Temperature [K]")
+    cbarS.set_ticklabels([str(t) for t in sticks])
+    cbarS.set_label("[K]", rotation=0, labelpad=15)
     im2.set_clim(0, 20000)
-    plt.suptitle('Antenna Temperature')
     plt.setp(axs, ylabel='LST [h]')
     axs[1].set_xlabel('Frequency [MHz]')
-    axs[0].text(115, 2, 'a)', color='white')
-    axs[1].text(115, 2, 'b)', color='white')
+    axs[0].text(112, 2, 'a)', color='white', fontsize=MEDIUM_SIZE)
+    axs[1].text(112, 2, 'b)', color='white', fontsize=MEDIUM_SIZE)
     yticks = [0, 4, 8, 12, 16, 20, 24]
    # locs = [10*t for t in yticks]
   #  locs[-1] = 241
