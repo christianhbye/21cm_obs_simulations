@@ -196,7 +196,9 @@ def polar_beam(gain_list=None, f=None, figsize=None):
         gain = gain[:, ::-1, :] # changing from elevation to theta
         ax1 = fig.add_axes([0, -i*dy, dx, dy], polar=True, label=str(i)+'1')
         axs.append(ax1)
+        ax1.text(np.pi/4, 14, chr(97+2*i)+')', size=MEDIUM_SIZE)
         ax2 = fig.add_axes([0.7*dx, -i*dy, dx, dy], polar=True, label=str(i)+'2')
+        ax2.text(np.pi/4, 14, chr(97+2*i+1)+')', size=MEDIUM_SIZE)
         axs.append(ax2)
         for j, find in enumerate(find_to_plot):  # loop over the frequencies to plot gain for in each panel
             phi0 = gain[find, :, 0]  # phi = 0
