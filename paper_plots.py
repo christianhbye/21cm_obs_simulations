@@ -63,7 +63,7 @@ def beams(gain_list=None, f=None, derivs=False, aspect='equal', figsize=None, xm
             derivs0 = a.compute_deriv(gain, 0, f)
             derivs90 = a.compute_deriv(gain, 90, f)
             plot0, plot90 = derivs0, derivs90
-            vmin, vmax = -0.08, 0.08
+            vmin, vmax = -0.07, 0.07
         else:
             plot0, plot90 = gain[:, :, 0], gain[:, :, 90]
             vmin, vmax = 0, 9
