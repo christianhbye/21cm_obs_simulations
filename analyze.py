@@ -556,7 +556,7 @@ def plot2D_LSTbins(f_in, temp, lst, bin_widths=[10, 20, 30, 40, 60, 80, 120, 241
  #   plt.grid(which='minor')
 
 def subplot_LSTbins(rms_arr_super, vmin, vmax):
-    fig, axs = pp.plot_basic(3, 3, True, True, figsize=None, xmajor=4, xminor=1, ymajor=None, yminor=None, dx=0.5, dy=0.5, hspace=1.05, vspace=1.05, customy=True)
+    fig, axs = pp.plot_basic(3, 3, True, True, figsize=None, xmajor=4, xminor=1, ymajor=None, yminor=None, dx=0.5, dy=0.5, hspace=1.1, vspace=1.05, customy=True)
     extent = [0, 24, 8.5, -0.5]
     for i in range(9):
         im = axs[i].imshow(rms_arr_super[i // 3, i%3, :, :], aspect='auto', extent=extent, interpolation='none', norm=mpcolors.LogNorm()) 
@@ -566,7 +566,7 @@ def subplot_LSTbins(rms_arr_super, vmin, vmax):
         cticks = [1, 10, 50, 100, 120]
     elif vmin == 10 and vmax == 500:
         cticks = [10, 50, 100, 200, 300, 400, 500]
-    cax = fig.add_axes([(3-1)*0.5*1.05+0.5+0.025, -2*0.5*1.05, 0.075, (3-1)*0.5*1.05+0.5])
+    cax = fig.add_axes([(3-1)*0.5*1.1+0.5+0.025, -2*0.5*1.05, 0.075, (3-1)*0.5*1.05+0.5])
     cbar = fig.colorbar(im, cax=cax, ticks=cticks)
     cbar.set_label('RMS [mK]')
     cbar.set_ticklabels([str(t) for t in cticks])
@@ -678,54 +678,73 @@ def EDGES_rms(f, t, tau_arr=None, amplitude_arr=None, model='EDGES_polynomial', 
         cbar.set_label(cbarlabel)
         plt.clim(vmin, vmax)
 
-def plot_gauss_edges(gauss40, gauss80, gauss120, edges, log10=True, vmin=1, vmax=150):
+def plot_gauss_edges(gauss40, gauss80, gauss120, edges, log10=True, vmin=1, vmax=150, north=True):
     """
     each input is an array where the first axis is the antenna type and the second is the latitude
     """
+    if north:
+        i = 0
+    else:
+        i = 1
     input = [gauss40, gauss80, gauss120, edges]
     amplitude_arr = np.linspace(-1, 0, 201)
     width_arr = np.linspace(0, 50, 201)
     tau_arr = np.linspace(0, 30, 121)
-    fig, axs = plt.subplots(figsize=(12,8), nrows=6, ncols=4, sharex=True, sharey='col', gridspec_kw={'hspace':0.15, 'wspace':0.2})
+    fig = plt.figure()
+    dx, dy = 0.4, 0.4
+    hspace1, hspace2, vspace = 1.1, 1.3, 1.1 
+#    fig, axs = plt.subplots(figsize=(12,8), nrows=6, ncols=4, sharex=True, sharey='col', gridspec_kw={'hspace':0.15, 'wspace':0.2})
     if log10:
         norm = mpcolors.LogNorm()
     else:
         norm = None
     left, right = -1*1000*amplitude_arr.max(), -1*1000*amplitude_arr.min()
-    for i in range(2):  # latitude
-        for j in range(3):   # antenna
-            for k in range(4):  # signal type
-                if not k == 3:
-                    top, bottom = width_arr.max(), width_arr.min()
-                    ypos = 40
-                    xc, yc = 100, 25
-                else:
-                    top, bottom = tau_arr.max(), tau_arr.min()
-                    ypos = 24
-                    xc, yc = 500, 7
-                signal = input[k]
-                im = axs[3*i+j, k].imshow(signal[j, i], aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
-                im.set_clim(vmin, vmax)
-                if i == 0 and j == 0:
-                    axs[3*i+j, k].text(800, ypos, chr(97+k+4*j+12*i)+')', color='white')
-                    axs[3*i+j, k].scatter(xc, yc, facecolors='none', edgecolors='white')
-   # for i in range(4):
-   #     axs[-1, i].set_xlabel('A [mK]')
-   # for i in range(6):
-   #     axs[i, 0].set_ylabel('FWHM [MHz]')
-   #     axs[i, 3].set_ylabel(r'$\tau$')
-    cbar = fig.colorbar(im, ax=axs.ravel(), location='right', ticks=[1, 10, 50, 100, 150])
-    cbar.set_ticklabels(['1', '10', '50', '100', '150'])
-   # fig.text(0.5, 0.04, 'A [mK]')
-   # fig.text(0.04, 0.5, 'FWHM [MHz]')
-   # axs[2, -1].set_ylabel(r'$\tau$')
-    axs[0,0].xaxis.set_major_locator(MultipleLocator(250))
-    axs[0,0].xaxis.set_minor_locator(MultipleLocator(125))
-    for i in range(3):
-        axs[0, i].yaxis.set_major_locator(MultipleLocator(25))
-        axs[0, i].yaxis.set_minor_locator(MultipleLocator(12.5))
-    axs[0, -1].yaxis.set_major_locator(MultipleLocator(10))
-    return fig, axs
+    col_title = ['Gaussian 40 MHz', 'Gaussian 80', 'Gaussian 120', 'EDGES Signal']
+    for j in range(3):   # antenna
+        for k in range(4):  # signal type
+            if not k == 3:
+                top, bottom = width_arr.max(), width_arr.min()
+                ypos = 5/6*50
+                xc, yc = 100, 25
+                labelc = 'white'
+            else:
+                top, bottom = tau_arr.max(), tau_arr.min()
+                ypos = 5/6*30
+                xc, yc = 500, 7
+                labelc = 'k'
+            signal = input[k]
+            if not k == 3:
+                xstart = k*dx*hspace1
+            else:
+                xstart = 2*dx*hspace1 + dx*hspace2
+            ax = fig.add_axes([xstart, -j*dy*vspace, dx, dy])
+            im = ax.imshow(signal[j, i], aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
+            im.set_clim(vmin, vmax)
+            ax.text(11/3*250, ypos, chr(97+k+4*j)+')', color=labelc, fontsize=MEDIUM_SIZE)
+            ax.scatter(xc, yc, facecolors='none', edgecolors='white')
+            if j == 2:
+                ax.set_xlabel('A [mK]')
+            else:
+                ax.set_xticklabels([])
+            if k == 0:
+                ax.set_ylabel('FWHM [MHz]')
+            elif k == 3:
+                ax.set_ylabel(r'$\tau$')
+            else:
+                ax.set_yticklabels([])
+            if j == 0:
+                ax.set_title(col_title[k])
+    cax = fig.add_axes([2*dx*hspace1+dx*hspace2+dx*1.05, -2*dy*vspace, 0.1*dx, 2*dy*vspace+dy])
+    cticks = [1, 10, 50, 100, 150]
+    cbar = fig.colorbar(im, cax=cax, ticks=cticks)
+    cbar.set_ticklabels([str(t) for t in cticks])
+#    axs[0].xaxis.set_major_locator(MultipleLocator(250))
+#    axs[0,0].xaxis.set_minor_locator(MultipleLocator(125))
+#    for i in range(3):
+#        axs[0, i].yaxis.set_major_locator(MultipleLocator(25))
+#        axs[0, i].yaxis.set_minor_locator(MultipleLocator(12.5))
+#    axs[0, -1].yaxis.set_major_locator(MultipleLocator(10))
+    return fig
 
 def save_all_plots(loc='mars', ground_plane=True, simulation='edges_hb'):
 #    azimuths = [0, 30, 60, 90, 120, 150]
