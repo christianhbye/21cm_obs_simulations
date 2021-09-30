@@ -104,7 +104,7 @@ def plot_rms(rms_arr, figsize=(9, 6), north=True):
         llmax, epmax = 900, 130
         llmajor, llminor, epmajor, epminor = 200, 100, 30, 15
     else:
-        chrstart = 103
+        chrstart = 97  # 103
         llmax, epmax = 4000, 500
         llmajor, llminor, epmajor, epminor = 1000, 500, 100, 50 
     __, __, lst = a.get_ftl(0)
@@ -115,12 +115,12 @@ def plot_rms(rms_arr, figsize=(9, 6), north=True):
             for k in range(3):
                 axs[i, j].plot(lst, rms_arr[i, j, k], label=r'$\psi_0 = {} \degree$'.format(azs[k]))
     for i in range(3):
-        axs[i, 0].text(22, 8/9*llmax, chr(chrstart+2*i)+')')
-        axs[i, 1].text(22, 8/9*epmax, chr(chrstart+2*i+1)+')')
+        axs[i, 0].text(22, 5/6*llmax, chr(chrstart+2*i)+')', fontsize=MEDIUM_SIZE)
+        axs[i, 1].text(22, 5/6*epmax, chr(chrstart+2*i+1)+')', fontsize=MEDIUM_SIZE)
         axs[i, 0].set_ylabel('RMS [mK]')
     for i in range(2):
         axs[-1, i].set_xlabel('LST [h]')
-    axs[0,1].legend(loc='upper center')
+    axs[0,1].legend(loc='upper center', ncol=2)
     axs[0,0].yaxis.set_major_locator(MultipleLocator(llmajor))
     axs[0,0].yaxis.set_minor_locator(MultipleLocator(llminor))
     axs[0,0].set_ylim(0, llmax)
@@ -128,6 +128,8 @@ def plot_rms(rms_arr, figsize=(9, 6), north=True):
     axs[0,1].yaxis.set_minor_locator(MultipleLocator(epminor))
     axs[0,1].set_ylim(0, epmax)
     plt.setp(axs, xticks=[0,2,4,6,8,10,12,14,16,18,20,22,24], xlim=(0,24))
+    axs[0, 0].set_title('LinLog')
+    axs[0, 1].set_title('EDGES Polynomial')
     return fig, axs
 
 def histogram(*args, no_bins=100):
@@ -136,7 +138,7 @@ def histogram(*args, no_bins=100):
     Each input arg is an rms array of shape (3, 3) where the row is number of params (5, 6, 7) and
     the col is orientation (0, 90, 120)
     """
-    fig, axs = plot_basic(3, 2, True, True, (12, 9), 0.1, 0.1, None, None, 400, 200, xlog=True)
+    fig, axs = plot_basic(3, 2, True, True, None, None, None, 400, 200, dx=1., dy=0.6, hspace=1.1, vspace=1.1, customx=True)
     args_mk = []  # mK-converted arrays
     superd = []
     for i in range(6):
@@ -155,7 +157,7 @@ def histogram(*args, no_bins=100):
     azs = [0, 90, 120]
     for i, array in enumerate(args_mk):
         panellabel = chr(97+i) + ')'
-        axs[i].text(0.95, 0.85, panellabel, transform=axs[i].transAxes)        
+        axs[i].text(0.95, 0.85, panellabel, transform=axs[i].transAxes, fontsize=BIGGER_SIZE)        
         for j in range(3):
             for k in range(3):
                 line_col = colors[j]
@@ -184,5 +186,7 @@ def histogram(*args, no_bins=100):
     axs[0].legend(handles=handles, loc='upper left', ncol=2, fontsize=10)
 #    handles, labels = axs[0].get_legend_handles_labels()
 #    fig.legend(handles, labels, loc='upper right')
+    for i in range(4):
+        axs[i].set_xticklabels([])
     return fig, axs
 

@@ -111,7 +111,7 @@ def rmsvslat(models=['LINLOG', 'EDGES_polynomial'], azimuths=[0, 90, 120], halfs
                 axs[i, k].plot(lats, rms, label=r'$\psi_0={:d} \degree$'.format(az))
     axs[2, 0].set_xlabel('Latitude [deg]')
     axs[2, 1].set_xlabel('Latitude [deg]')
-    axs[0, 1].legend(loc='upper left')
+    axs[0, 1].legend(loc='upper left', ncol=2)
    # handles, labels = axs[0, 0].get_legend_handles_labels()
    # fig.legend(handles, labels, loc='upper center')
     axs[0,0].xaxis.set_major_locator(MultipleLocator(30))
@@ -123,9 +123,11 @@ def rmsvslat(models=['LINLOG', 'EDGES_polynomial'], azimuths=[0, 90, 120], halfs
     axs[0,0].set_ylim(0,250)
     axs[0,1].set_ylim(0,50)
     axs[0,0].set_xlim(-90,90)
+    axs[0, 0].set_title('LinLog')
+    axs[0, 1].set_title('EDGES Polynomial')
     for i in range(3):
-        axs[i, 0].text(11/12*180-90, 8/9*250, chr(97+2*i)+')')
-        axs[i, 1].text(11/12*180-90, 8/9*50, chr(97+2*i+1)+')')
+        axs[i, 0].text(11/12*180-90, 5/6*250, chr(97+2*i)+')', fontsize=MEDIUM_SIZE)
+        axs[i, 1].text(11/12*180-90, 5/6*50, chr(97+2*i+1)+')', fontsize=MEDIUM_SIZE)
     return fig, axs
 
 def get_hist(antenna_type, model, Nfg_array=[5, 6, 7], azimuths=[0, 90, 120], no_bins=100):
@@ -215,18 +217,20 @@ def plot(rms_arr, azimuth, lst=None, rands_lst=False, vmin=0, vmax=None, hidex=F
         plt.savefig('plots/' + model + '_' + str(azimuth) + '.svg')
     
 
-def subplot(rms_arr_list, azlist=[0, 90, 120], nrows=3, ncols=3):
+def subplot(rms_arr_list, figsize=None):
     """
     rms_arr_list is a list of rms_arr st [0] goes in the first subplot etc
     """
+    azlist = [0, 90, 120]
+    nrows, ncols = 3, 3
     alph = ['a)', 'b)', 'c)', 'd)', 'e)', 'f)', 'g)', 'h)', 'i)']
-    fig, axs = pp.plot_basic(nrows, ncols, sharex=True, sharey=True, wspace=0.2, hspace=0.2, figsize=None, xmajor=4, xminor=1, ymajor=30, yminor=10)
+    fig, axs = pp.plot_basic(nrows, ncols, sharex=True, sharey=True, figsize=figsize, xmajor=4, xminor=1, ymajor=30, yminor=10, dx=0.8, dy=0.8, hspace=1.1, vspace=1.1)
    # fig, axs = plt.subplots(nrows=nrows, ncols=ncols, sharex=True, sharey=True)
     for i, ax in enumerate(axs):
         im = ax.imshow(rms_arr_list[i] * 1000, aspect='auto', extent=[0, 24, -90, 90], interpolation='none', norm=mpcolors.LogNorm())
         im.set_clim(10, 500)
         ax.grid(linestyle='--')
-        ax.text(21, 60, alph[i], color='white')
+        ax.text(21, 60, alph[i], color='white', fontsize=MEDIUM_SIZE)
        # if i > 5:
        #     ax.set_xlabel('LST [h]')
       #  if i%3 == 0:
@@ -243,7 +247,8 @@ def subplot(rms_arr_list, azlist=[0, 90, 120], nrows=3, ncols=3):
     for i in range(3):
         axs[3*i].set_ylabel('Latitude [deg]')
         axs[6+i].set_xlabel('LST [h]')
-    cbar = fig.colorbar(im, ax=axs, ticks=[10, 50, 100, 200, 300, 400, 500])
+    cax = fig.add_axes([1*0.85+(nrows-1)*0.8*1.1, -1.6*1.1, 0.1*0.8, (nrows-1)*1.1*0.8+0.8])
+    cbar = fig.colorbar(im, cax=cax, ticks=[10, 50, 100, 200, 300, 400, 500])
     cbar.set_ticklabels(['10', '50', '100', '200', '300', '400', '500'])
     cbar.set_label('RMS [mK]')
     return fig, axs

@@ -301,12 +301,12 @@ def plot_temp_3d(freq_vector, lst_vector, temp_array_N, temp_array_S, figsize=No
     sticks = [0, 5000, 10000, 15000, 20000]
     cbarN = fig.colorbar(im, ax=axs[0], ticks=nticks)
     cbarN.set_ticklabels([str(t) for t in nticks])
-    cbarN.set_label("[K]", rotation=0, labelpad=15)
+    cbarN.set_label("[K]", labelpad=15)
     im.set_clim(0, 10000)
     im2 = axs[1].imshow(temp_array_S, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min], interpolation='none')
     cbarS = fig.colorbar(im2, ax=axs[1], ticks=sticks)
     cbarS.set_ticklabels([str(t) for t in sticks])
-    cbarS.set_label("[K]", rotation=0, labelpad=15)
+    cbarS.set_label("[K]", labelpad=15)
     im2.set_clim(0, 20000)
     plt.setp(axs, ylabel='LST [h]')
     axs[1].set_xlabel('Frequency [MHz]')
@@ -556,22 +556,30 @@ def plot2D_LSTbins(f_in, temp, lst, bin_widths=[10, 20, 30, 40, 60, 80, 120, 241
  #   plt.grid(which='minor')
 
 def subplot_LSTbins(rms_arr_super, vmin, vmax):
-    fig, axs = pp.plot_basic(3, 3, True, True, figsize=None, wspace=0.2, hspace=0.2, xmajor=4, xminor=1, ymajor=None, yminor=None, customy=True)
+    fig, axs = pp.plot_basic(3, 3, True, True, figsize=None, xmajor=4, xminor=1, ymajor=None, yminor=None, dx=0.5, dy=0.5, hspace=1.05, vspace=1.05, customy=True)
     extent = [0, 24, 8.5, -0.5]
     for i in range(9):
         im = axs[i].imshow(rms_arr_super[i // 3, i%3, :, :], aspect='auto', extent=extent, interpolation='none', norm=mpcolors.LogNorm()) 
         im.set_clim(vmin, vmax)
-    if vmax == 120:
-        cticks = [0.1, 1, 10, 50, 100, 120]
-    elif vmax == 500:
-        cticks = [0.1, 1, 10, 50, 100, 200, 300, 400, 500]
-    cbar = fig.colorbar(im, ax=axs, ticks=cticks)
+        axs[i].text(22, 0.25, chr(97+i)+')', color='white', fontsize=MEDIUM_SIZE)
+    if vmin == 1 and vmax == 120:
+        cticks = [1, 10, 50, 100, 120]
+    elif vmin == 10 and vmax == 500:
+        cticks = [10, 50, 100, 200, 300, 400, 500]
+    cax = fig.add_axes([(3-1)*0.5*1.05+0.5+0.025, -2*0.5*1.05, 0.075, (3-1)*0.5*1.05+0.5])
+    cbar = fig.colorbar(im, cax=cax, ticks=cticks)
     cbar.set_label('RMS [mK]')
     cbar.set_ticklabels([str(t) for t in cticks])
     plt.setp(axs, yticks=np.arange(9), yticklabels=['0', '1', '2', '3', '4', '6', '8', '12', '24'])
     for i in range(3):
+        for j in range(2):
+            axs[3*i+j+1].set_yticklabels([])
+    for i in range(3):
         axs[3*i].set_ylabel('Bin Width [h]')
         axs[-(i+1)].set_xlabel('LST [h]')
+    azs = [0, 90, 120]
+    for i in range(3):
+        axs[i].set_title(r'$\psi_0 = {:d} \degree$'.format(azs[i]))
     return fig, axs
 
 def add_Gaussian(f, t, width, amplitude, centre=80):
