@@ -699,7 +699,7 @@ def plot_gauss_edges(gauss40, gauss80, gauss120, edges, log10=True, vmin=1, vmax
     else:
         norm = None
     left, right = -1*1000*amplitude_arr.max(), -1*1000*amplitude_arr.min()
-    col_title = ['Gaussian 40 MHz', 'Gaussian 80', 'Gaussian 120', 'EDGES Signal']
+    col_title = ['Gaussian 40 MHz', 'Gaussian 80 MHz', 'Gaussian 120 MHz', 'EDGES Signal']
     for j in range(3):   # antenna
         for k in range(4):  # signal type
             if not k == 3:
