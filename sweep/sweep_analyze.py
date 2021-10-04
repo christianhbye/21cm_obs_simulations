@@ -148,7 +148,7 @@ def rmsvslat_data():
         for j, az in enumerate(azimuths):
             rms = rms_sweep(ground_plane, antenna, az, model, Nfg=6, avg=True)
             rms *= 1000  # to mK
-            rms_fg[i, j] = rms
+            rms_fg[i, j, :] = rms
             for kk, lat in enumerate(lats):
                 f, t, l = a.get_ftl(az, 'sweep', lat, ground_plane, antenna)
                 t_mean = t.mean(axis=0)
@@ -160,6 +160,24 @@ def rmsvslat_data():
                 rms_edg = 1000 * rms_edg_ra * rms_edg_ref
                 rms_edges[i, j, kk] = rms_edg
     return rms_fg, rms_gauss, rms_edges
+
+def rmsvslat_21cm(rms_fg, rms_gauss40, rms_gauss80, rms_gauss120, rms_edges):
+    lats = np.linspace(90, -90, 121)
+    azs = [0, 90, 120]
+    fig, axs = pp.plot_basic(3, 4, True, True, (5, 5), 30, 15, 10, 5, dx=0.5, dy=0.25, hspace=1.1, vspace=1.1)
+    for ax in axs:
+        ax.set_xlim(-90, 90)
+        ax.set_ylim(0, 45)
+    for i in range(3):  # antenna
+        for j in range(3):  # azimuth
+           # for k in range(4):
+            k = 0
+            axs[4*i+k].plot(lats, rms_fg[i, j, :], c='C'+str(j), label=r'$\psi_0={:d} \degree$'.format(azs[j]), ls='--')
+            axs[4*i].plot(lats, rms_gauss40[i, j, :], c='C'+str(j), ls='-')
+            axs[4*i+1].plot(lats, rms_gauss80[i, j, :], c='C'+str(j), ls='-')
+            axs[4*i+2].plot(lats, rms_gauss120[i, j, :], c='C'+str(j), ls='-')
+            axs[4*i+3].plot(lats, rms_edges[i, j, :], c='C'+str(j), ls='-')
+    return fig, axs
 
 def get_hist(antenna_type, model, Nfg_array=[5, 6, 7], azimuths=[0, 90, 120], no_bins=100):
     if antenna_type == 'mini_MIST':
