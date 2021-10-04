@@ -38,6 +38,12 @@ def plot_basic(nrows, ncols, sharex, sharey, figsize, xmajor, xminor, ymajor, ym
 #                ax.label_outer()
                  ax.set_yticklabels([])
             axs.append(ax)
+    if sharex:
+        for i in range(1, len(axs)):
+            axs[i].get_shared_x_axes().join(axs[0], axs[i])
+    if sharey:
+        for i in range(1, len(axs)):
+            axs[i].get_shared_y_axes().join(axs[0], axs[i])
     return fig, axs
 
 def beams(gain_list=None, f=None, derivs=False, aspect='equal', figsize=None, xmajor=30, xminor=15, ymajor=20, yminor=10):
