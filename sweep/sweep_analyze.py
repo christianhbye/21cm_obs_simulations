@@ -153,10 +153,10 @@ def rmsvslat_data():
                 f, t, l = a.get_ftl(az, 'sweep', lat, ground_plane, antenna)
                 t_mean = t.mean(axis=0)
                 for k, c in enumerate(gaussian_centers):
-                    rms = a.gaussian_rms(f, t_mean, width_arr=[25], amp_arr=[-100], centre=c)
+                    rms = a.gaussian_rms(f, t_mean, width_arr=[25], amp_arr=[-0.1], centre=c)
                     rms *= 1000
                     rms_gauss[k, i, j, kk] = rms
-                rms_edg = a.EDGES_rms(f, t_mean, tau_arr=[7], amp_arr=[-100])
+                rms_edg = a.EDGES_rms(f, t_mean, tau_arr=[7], amp_arr=[-0.1])
                 rms_edg *= 1000
                 rms_edges[i, j, kk] = rms_edg
     return rms_fg, rms_gauss, rms_edges
