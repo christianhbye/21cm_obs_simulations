@@ -141,11 +141,13 @@ def rmsvslat_data():
     rms_edges = np.empty((len(antennas), len(azimuths), len(lats)))
     gaussian_centers = [40, 80, 120]
     for i, antenna in enumerate(antennas):
+        print('i= {}'.format(i))
         if antenna == 'mini_MIST':
             ground_plane = True
         else:
             ground_plane = False
         for j, az in enumerate(azimuths):
+            print('j= {}'.format(j))
             rms = rms_sweep(ground_plane, antenna, az, model, Nfg=6, avg=True)
             rms *= 1000  # to mK
             rms_fg[i, j] = rms
@@ -153,11 +155,11 @@ def rmsvslat_data():
                 f, t, l = a.get_ftl(az, 'sweep', lat, ground_plane, antenna)
                 t_mean = t.mean(axis=0)
                 for k, c in enumerate(gaussian_centers):
-                    rms = a.gaussian_rms(f, t_mean, width_arr=[25], amp_arr=[-0.1], centre=c)
-                    rms *= 1000
+                    rms_ratio, rms_ref = a.gaussian_rms(f, t_mean, width_arr=[25], amplitude_arr=[-0.1], centre=c)
+                    rms = 1000 * rms_ratio * rms_ref
                     rms_gauss[k, i, j, kk] = rms
-                rms_edg = a.EDGES_rms(f, t_mean, tau_arr=[7], amp_arr=[-0.1])
-                rms_edg *= 1000
+                rms_edg_ra, rms_edg_ref = a.EDGES_rms(f, t_mean, tau_arr=[7], amplitude_arr=[-0.1])
+                rms_edg = 1000 * rms_edg_ra * rms_edg_ref
                 rms_edges[i, j, kk] = rms_edg
     return rms_fg, rms_gauss, rms_edges
 
