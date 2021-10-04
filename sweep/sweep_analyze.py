@@ -130,6 +130,37 @@ def rmsvslat(models=['LINLOG', 'EDGES_polynomial'], azimuths=[0, 90, 120], halfs
         axs[i, 1].text(11/12*180-90, 5/6*50, chr(97+2*i+1)+')', fontsize=MEDIUM_SIZE)
     return fig, axs
 
+
+def rmsvslat_data():
+    antennas = ['old_MIST', 'new_MIST', 'mini_MIST']
+    azimuths = [0, 90, 120]
+    model = 'EDGES_polynomial'
+    lats = np.linspace(90.0, -90.0, 121)
+    rms_fg = np.empty((len(antennas), len(azimuths), len(lats)))
+    rms_gauss = np.empty((3, len(antennas), len(azimuths), len(lats)))
+    rms_edges = np.empty((len(antennas), len(azimuths), len(lats)))
+    gaussian_centers = [40, 80, 120]
+    for i, antenna in enumerate(antennas):
+        if antenna == 'mini_MIST':
+            ground_plane = True
+        else:
+            ground_plane = False
+        for j, az in enumerate(azimuths):
+            rms = rms_sweep(ground_plane, antenna, az, model, Nfg=6, avg=True)
+            rms *= 1000  # to mK
+            rms_fg[i, j] = rms
+            for kk, lat in enumerate(lats):
+                f, t, l = a.get_ftl(az, 'sweep', lat, ground_plane, antenna)
+                t_mean = t.mean(axis=0)
+                for k, c in enumerate(gaussian_centers):
+                    rms = a.gaussian_rms(f, t_mean, width_arr=[25], amp_arr=[-100], centre=c)
+                    rms *= 1000
+                    rms_gauss[k, i, j, kk] = rms
+                rms_edg = a.EDGES_rms(f, t_mean, tau_arr=[7], amp_arr=[-100])
+                rms_edg *= 1000
+                rms_edges[i, j, kk] = rms_edg
+    return rms_fg, rms_gauss, rms_edges
+
 def get_hist(antenna_type, model, Nfg_array=[5, 6, 7], azimuths=[0, 90, 120], no_bins=100):
     if antenna_type == 'mini_MIST':
         ground_plane = True
