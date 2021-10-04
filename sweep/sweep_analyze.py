@@ -141,13 +141,11 @@ def rmsvslat_data():
     rms_edges = np.empty((len(antennas), len(azimuths), len(lats)))
     gaussian_centers = [40, 80, 120]
     for i, antenna in enumerate(antennas):
-        print('i= {}'.format(i))
         if antenna == 'mini_MIST':
             ground_plane = True
         else:
             ground_plane = False
         for j, az in enumerate(azimuths):
-            print('j= {}'.format(j))
             rms = rms_sweep(ground_plane, antenna, az, model, Nfg=6, avg=True)
             rms *= 1000  # to mK
             rms_fg[i, j] = rms
