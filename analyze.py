@@ -712,11 +712,15 @@ def plot_gauss_edges(gauss40, gauss80, gauss120, edges, log10=True, vmin=1, vmax
         norm = None
     left, right = -1*1000*amplitude_arr.max(), -1*1000*amplitude_arr.min()
     col_title = ['Gaussian 40 MHz', 'Gaussian 80 MHz', 'Gaussian 120 MHz', 'EDGES Signal']
+    ant_labels = ['Large', 'Small', 'Small +\n'+'ground plane']
     for j in range(3):   # antenna
         for k in range(4):  # signal type
             if not k == 3:
                 top, bottom = width_arr.max(), width_arr.min()
-                ypos = 5/6*50
+                if not j == 2:
+                    ypos = 5/6*50
+                else:
+                    ypos = 4/6 * 50
                 xc, yc = 100, 25
                 labelc = 'white'
             else:
@@ -732,16 +736,20 @@ def plot_gauss_edges(gauss40, gauss80, gauss120, edges, log10=True, vmin=1, vmax
             ax = fig.add_axes([xstart, -j*dy*vspace, dx, dy])
             im = ax.imshow(signal[j, i], aspect='auto', extent=[left, right, bottom, top], interpolation='none', norm=norm)
             im.set_clim(vmin, vmax)
-            ax.text(11/3*250, ypos, chr(97+k+4*j)+')', color=labelc, fontsize=MEDIUM_SIZE)
+            if k == 0:
+                ax.text(4/3*250, ypos, ant_labels[j], color=labelc, fontsize=MEDIUM_SIZE)
             ax.scatter(xc, yc, facecolors='none', edgecolors='white')
             if j == 2:
-                ax.set_xlabel('A [mK]')
+                if k == 0:
+                    ax.set_xlabel('A [mK]')
             else:
                 ax.set_xticklabels([])
             if k == 0:
-                ax.set_ylabel('FWHM [MHz]')
+                if j == 2:
+                    ax.set_ylabel('FWHM [MHz]')
             elif k == 3:
-                ax.set_ylabel(r'$\tau$')
+                if j == 2:
+                    ax.set_ylabel(r'$\tau$')
             else:
                 ax.set_yticklabels([])
             if j == 0:
