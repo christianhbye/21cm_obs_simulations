@@ -564,7 +564,14 @@ def subplot_LSTbins(rms_arr_super, vmin, vmax):
     for i in range(9):
         im = axs[i].imshow(rms_arr_super[i // 3, i%3, :, :], aspect='auto', extent=extent, interpolation='none', norm=mpcolors.LogNorm()) 
         im.set_clim(vmin, vmax)
-        axs[i].text(22, 0.25, chr(97+i)+')', color='white', fontsize=MEDIUM_SIZE)
+   #     axs[i].text(22, 0.25, chr(97+i)+')', color='white', fontsize=MEDIUM_SIZE)
+    ant_labels = ['Large', 'Small', 'Small +\n'+'ground plane']
+    for i in range(3):
+        if i == 2:
+            yp = 1.2
+        else:
+            yp = 0.25
+        axs[3*i].text(5, yp, ant_labels[i], color='white', fontsize=MEDIUM_SIZE)
     if vmin == 1 and vmax == 120:
         cticks = [1, 10, 50, 100, 120]
     elif vmin == 10 and vmax == 500:
@@ -577,9 +584,11 @@ def subplot_LSTbins(rms_arr_super, vmin, vmax):
     for i in range(3):
         for j in range(2):
             axs[3*i+j+1].set_yticklabels([])
-    for i in range(3):
-        axs[3*i].set_ylabel('Bin Width [h]')
-        axs[-(i+1)].set_xlabel('LST [h]')
+#    for i in range(3):
+#        axs[3*i].set_ylabel('Bin Width [h]')
+#        axs[-(i+1)].set_xlabel('LST [h]')
+    axs[-3].set_xlabel('LST [h]')
+    axs[-3].set_ylabel('Bin Width [h]')
     azs = [0, 90, 120]
     for i in range(3):
         axs[i].set_title(r'$\psi_0 = {:d} \degree$'.format(azs[i]))
