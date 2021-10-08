@@ -111,26 +111,33 @@ def plot_rms(rms_arr, figsize=(9, 6), north=True):
     and third axis is for different azimuths: 0, 90, 120
     """
     if north:
-        chrstart = 97
+#        chrstart = 97
         llmax, epmax = 900, 130
         llmajor, llminor, epmajor, epminor = 200, 100, 30, 15
     else:
-        chrstart = 97  # 103
+#        chrstart = 97  # 103
         llmax, epmax = 4000, 500
         llmajor, llminor, epmajor, epminor = 1000, 500, 100, 50 
     __, __, lst = a.get_ftl(0)
     azs = [0, 90, 120]
+    ant_labels = ['Large', 'Small', 'Small +\n'+'ground plane']
     fig, axs = plt.subplots(nrows=3, ncols=2, sharex=True, sharey='col', figsize=figsize, gridspec_kw={'hspace':0.15, 'wspace':0.15})
     for i in range(3):
         for j in range(2):
             for k in range(3):
                 axs[i, j].plot(lst, rms_arr[i, j, k], label=r'$\psi_0 = {} \degree$'.format(azs[k]))
     for i in range(3):
-        axs[i, 0].text(22, 5/6*llmax, chr(chrstart+2*i)+')', fontsize=MEDIUM_SIZE)
-        axs[i, 1].text(22, 5/6*epmax, chr(chrstart+2*i+1)+')', fontsize=MEDIUM_SIZE)
-        axs[i, 0].set_ylabel('RMS [mK]')
-    for i in range(2):
-        axs[-1, i].set_xlabel('LST [h]')
+        if i == 2:
+            factor = 4/6
+        else:
+            factor = 5/6
+        axs[i, 0].text(10, factor*llmax, ant_labels[i], fontsize=MEDIUM_SIZE)
+    #    axs[i, 1].text(22, 5/6*epmax, chr(chrstart+2*i+1)+')', fontsize=MEDIUM_SIZE)
+    #    axs[i, 0].set_ylabel('RMS [mK]')
+  #  for i in range(2):
+     #   axs[-1, i].set_xlabel('LST [h]')
+    axs[-1, 0].set_xlabel('LST [h]')
+    axs[-1, 0].set_ylabel('RMS [mK]')
     axs[0,1].legend(loc='upper center', ncol=2)
     axs[0,0].yaxis.set_major_locator(MultipleLocator(llmajor))
     axs[0,0].yaxis.set_minor_locator(MultipleLocator(llminor))
@@ -139,8 +146,8 @@ def plot_rms(rms_arr, figsize=(9, 6), north=True):
     axs[0,1].yaxis.set_minor_locator(MultipleLocator(epminor))
     axs[0,1].set_ylim(0, epmax)
     plt.setp(axs, xticks=[0,2,4,6,8,10,12,14,16,18,20,22,24], xlim=(0,24))
-    axs[0, 0].set_title('LinLog')
-    axs[0, 1].set_title('EDGES Polynomial')
+    axs[0, 0].set_title('LinLog', fontsize=BIGGER_SIZE)
+    axs[0, 1].set_title('EDGES Polynomial', fontsize=BIGGER_SIZE)
     return fig, axs
 
 def histogram(*args, no_bins=100):
