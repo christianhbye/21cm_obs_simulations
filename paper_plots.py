@@ -166,9 +166,11 @@ def histogram(*args, no_bins=100):
     linestyles = ['solid', 'dashed', 'dotted']
     Nfgs = [5, 6, 7]
     azs = [0, 90, 120]
+    ant_labels = ['Large', 'Small', 'Small +\n'+'ground plane']
     for i, array in enumerate(args_mk):
-        panellabel = chr(97+i) + ')'
-        axs[i].text(0.95, 0.85, panellabel, transform=axs[i].transAxes, fontsize=BIGGER_SIZE)        
+        if i % 2 == 0:
+            panellabel = ant_labels[i//2]
+            axs[i].text(0.1, 0.5, panellabel, transform=axs[i].transAxes, fontsize=BIGGER_SIZE)        
         for j in range(3):
             for k in range(3):
                 line_col = colors[j]
@@ -179,10 +181,12 @@ def histogram(*args, no_bins=100):
                 axs[i].xaxis.set_major_locator(LogLocator(base=10, numticks=15))
     titles = ['LinLog', 'EDGES Polynomial']
     for i in range(2):
-        axs[-(i+1)].set_xlabel('RMS [mK]')
+   #     axs[-(i+1)].set_xlabel('RMS [mK]')
         axs[i].set_title(titles[i])
-    for i in range(3):
-        axs[2*i].set_ylabel('Counts')
+   # for i in range(3):
+   #     axs[2*i].set_ylabel('Counts')
+    axs[-2].set_xlabel('RMS [mK]')
+    axs[-2].set_ylabel('Counts')
     plt.setp(axs, ylim=(0, 2200), xlim=(0.1, 12000))
     lines = []
     lstyles = []
