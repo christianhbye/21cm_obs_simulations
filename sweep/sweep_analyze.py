@@ -272,14 +272,16 @@ def subplot(rms_arr_list, figsize=None):
     """
     azlist = [0, 90, 120]
     nrows, ncols = 3, 3
-    alph = ['a)', 'b)', 'c)', 'd)', 'e)', 'f)', 'g)', 'h)', 'i)']
+#    alph = ['a)', 'b)', 'c)', 'd)', 'e)', 'f)', 'g)', 'h)', 'i)']
     fig, axs = pp.plot_basic(nrows, ncols, sharex=True, sharey=True, figsize=figsize, xmajor=4, xminor=1, ymajor=30, yminor=10, dx=0.8, dy=0.8, hspace=1.1, vspace=1.1)
    # fig, axs = plt.subplots(nrows=nrows, ncols=ncols, sharex=True, sharey=True)
+    ant_labels = ['Large', 'Small', 'Small +\n'+'ground plane']
     for i, ax in enumerate(axs):
         im = ax.imshow(rms_arr_list[i] * 1000, aspect='auto', extent=[0, 24, -90, 90], interpolation='none', norm=mpcolors.LogNorm())
         im.set_clim(10, 500)
         ax.grid(linestyle='--')
-        ax.text(21, 60, alph[i], color='white', fontsize=MEDIUM_SIZE)
+        if i % 3 == 0:
+            ax.text(3, 45, ant_labels[i//3], color='white', fontsize=MEDIUM_SIZE)
        # if i > 5:
        #     ax.set_xlabel('LST [h]')
       #  if i%3 == 0:
@@ -293,9 +295,14 @@ def subplot(rms_arr_list, figsize=None):
   #      label = 90 - 10*i
   #      ylabs.append(label)
   #  plt.setp(axs, yticks=ylocs, yticklabels=ylabs)
+ #   for i in range(3):
+ #       axs[3*i].set_ylabel('Latitude [deg]')
+ #       axs[6+i].set_xlabel('LST [h]')
+    axs[-3].set_ylabel('Latitude [deg]')
+    axs[-3].set_xlabel('LST [h]')
+    azs = [0, 90, 120]
     for i in range(3):
-        axs[3*i].set_ylabel('Latitude [deg]')
-        axs[6+i].set_xlabel('LST [h]')
+        axs[i].set_title(r'$\psi_0={:d} \degree$'.format(azs[i]), fontsize=BIGGER_SIZE)
     cax = fig.add_axes([1*0.85+(nrows-1)*0.8*1.1, -1.6*1.1, 0.1*0.8, (nrows-1)*1.1*0.8+0.8])
     cbar = fig.colorbar(im, cax=cax, ticks=[10, 50, 100, 200, 300, 400, 500])
     cbar.set_ticklabels(['10', '50', '100', '200', '300', '400', '500'])
