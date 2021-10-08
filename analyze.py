@@ -312,8 +312,8 @@ def plot_temp_3d(freq_vector, lst_vector, temp_array_N, temp_array_S, figsize=No
     im2.set_clim(0, 20000)
     plt.setp(axs, ylabel='LST [h]')
     axs[1].set_xlabel('Frequency [MHz]')
-    axs[0].text(112, 2, 'a)', color='white', fontsize=MEDIUM_SIZE)
-    axs[1].text(112, 2, 'b)', color='white', fontsize=MEDIUM_SIZE)
+    axs[0].text(98, 2, r'$79.5^{\circ}$ N', color='white', fontsize=MEDIUM_SIZE)
+    axs[1].text(98, 2, r'$24.0^{\circ}$ S', color='white', fontsize=MEDIUM_SIZE)
     yticks = [0, 4, 8, 12, 16, 20, 24]
    # locs = [10*t for t in yticks]
   #  locs[-1] = 241
