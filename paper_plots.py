@@ -146,8 +146,8 @@ def plot_rms(rms_arr, figsize=(9, 6), north=True):
     axs[0,1].yaxis.set_minor_locator(MultipleLocator(epminor))
     axs[0,1].set_ylim(0, epmax)
     plt.setp(axs, xticks=[0,2,4,6,8,10,12,14,16,18,20,22,24], xlim=(0,24))
-    axs[0, 0].set_title('LinLog', fontsize=BIGGER_SIZE)
-    axs[0, 1].set_title('EDGES Polynomial', fontsize=BIGGER_SIZE)
+    axs[0, 0].set_title('LinLog', fontsize=MEDIUM_SIZE)
+    axs[0, 1].set_title('EDGES Polynomial', fontsize=MEDIUM_SIZE)
     return fig, axs
 
 def histogram(*args, no_bins=100):
