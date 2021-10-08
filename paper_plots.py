@@ -81,20 +81,25 @@ def beams(gain_list=None, f=None, derivs=False, aspect='equal', figsize=None, xm
     im.set_clim(vmin, vmax)
     axs[0].set_title(r'$\phi=0 \degree$', fontsize=MEDIUM_SIZE)
     axs[1].set_title(r'$\phi=90 \degree$', fontsize=MEDIUM_SIZE)
+    ant_labels = ['Large', 'Small', 'Small +\n'+'ground plane']
     if derivs:
         title = 'Derivative [1/MHz]'
-        chrstart = 103
+     #   chrstart = 103
     else:
         title = 'Gain [linear units]'
-        chrstart = 97  # a
+     #   chrstart = 97  # a
     fig.suptitle(title, x=0.72, y=1.)
-    for i in range(3):
-        axs[2*i].set_ylabel(r'$\nu$ [MHz]')
-    for i in range(2):
-        axs[-(i+1)].set_xlabel(r'$\theta$ [deg]')
-    for i in range(6):
-        label = chr(chrstart+i) + ')'
-        axs[i].text(80, 50, label, color='white', fontsize=MEDIUM_SIZE)
+#    for i in range(3):
+  #      axs[2*i].set_ylabel(r'$\nu$ [MHz]')
+    axs[4].set_ylabel(r'$\nu$ [MHz]')
+    axs[4].set_xlabel(r'$\theta$ [deg]')
+#    for i in range(2):
+#        axs[-(i+1)].set_xlabel(r'$\theta$ [deg]')
+    if not derivs:
+         for i in range(3):
+#        label = chr(chrstart+i) + ')'
+             label = ant_labels[i]
+             axs[2*i].text(10, 55, label, color='white', fontsize=MEDIUM_SIZE)
     if return_gain:
         return fig, axs, toreturn_gain, f
     else:
