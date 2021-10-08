@@ -190,15 +190,17 @@ def polar_beam(gain_list=None, f=None, figsize=None):
     dx, dy = 0.8, 0.8  # panel width and height
     axs = []
     el = np.deg2rad(np.arange(-91, 91))
+    ant_label = ['Large', 'Small', 'Small +\n'+'ground plane']
     for i, gain in enumerate(gain_list):  # loop over rows / antenna models
         if gain.shape[-1] == 361:
             gain = gain[:, :, :-1] # cut last angle since 0 = 360 degrees
         gain = gain[:, ::-1, :] # changing from elevation to theta
         ax1 = fig.add_axes([0, -i*dy, dx, dy], polar=True, label=str(i)+'1')
         axs.append(ax1)
-        ax1.text(np.pi/4, 14, chr(97+2*i)+')', size=MEDIUM_SIZE)
-        ax2 = fig.add_axes([0.7*dx, -i*dy, dx, dy], polar=True, label=str(i)+'2')
-        ax2.text(np.pi/4, 14, chr(97+2*i+1)+')', size=MEDIUM_SIZE)
+    #    ax1.text(np.pi/4, 14, chr(97+2*i)+')', size=MEDIUM_SIZE)
+        ax1.text(np.pi/4, 14, ant_label[i], size=MEDIUM_SIZE)
+        ax2 = fig.add_axes([0.8*dx, -i*dy, dx, dy], polar=True, label=str(i)+'2')
+       # ax2.text(np.pi/4, 14, chr(97+2*i+1)+')', size=MEDIUM_SIZE)
         axs.append(ax2)
         for j, find in enumerate(find_to_plot):  # loop over the frequencies to plot gain for in each panel
             phi0 = gain[find, :, 0]  # phi = 0
