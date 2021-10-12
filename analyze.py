@@ -217,6 +217,7 @@ def polar_beam(gain_list=None, f=None, figsize=None):
     fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.7*dx, -2*dy), ncol=3)
     for ax in axs:
         ax.set_rgrids([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], ['0', ' ', '2', ' ', '4', ' ', '6', ' ', '8', ' '], angle=22.5)
+#        ax.text(-8*np.pi/4, 1, 'Gain')
     thetas = [-90, -45, 0, 45, 90]
     tticks = [np.deg2rad(t) for t in thetas]
     tlabels = [r'${:d} \degree$'.format(int(np.abs(t))) for t in thetas]
@@ -310,8 +311,8 @@ def plot_temp_3d(freq_vector, lst_vector, temp_array_N, temp_array_S, figsize=No
     cbarS.set_ticklabels([str(t) for t in sticks])
     cbarS.set_label("[K]", labelpad=15)
     im2.set_clim(0, 20000)
-   # plt.setp(axs, ylabel='LST [h]')
-    axs[1].set_ylabel('LST [h]')
+    plt.setp(axs, ylabel='LST [h]')
+   # axs[1].set_ylabel('LST [h]')
     axs[1].set_xlabel('Frequency [MHz]')
     axs[0].text(98, 2, r'$79.5^{\circ}$ N', color='white', fontsize=MEDIUM_SIZE)
     axs[1].text(98, 2, r'$24.0^{\circ}$ S', color='white', fontsize=MEDIUM_SIZE)
@@ -584,9 +585,9 @@ def subplot_LSTbins(rms_arr_super, vmin, vmax):
     for i in range(3):
         for j in range(2):
             axs[3*i+j+1].set_yticklabels([])
-#    for i in range(3):
-#        axs[3*i].set_ylabel('Bin Width [h]')
-#        axs[-(i+1)].set_xlabel('LST [h]')
+    for i in range(3):
+        axs[3*i].set_ylabel('Bin Width [h]')
+        axs[-(i+1)].set_xlabel('LST [h]')
     axs[-3].set_xlabel('LST [h]')
     axs[-3].set_ylabel('Bin Width [h]')
     azs = [0, 90, 120]
@@ -738,17 +739,17 @@ def plot_gauss_edges(gauss40, gauss80, gauss120, edges, log10=True, vmin=1, vmax
             im.set_clim(vmin, vmax)
             if k == 0:
                 ax.text(4/3*250, ypos, ant_labels[j], color=labelc, fontsize=MEDIUM_SIZE)
-            ax.scatter(xc, yc, facecolors='none', edgecolors='white')
+ #           ax.scatter(xc, yc, facecolors='none', edgecolors='white')
             if j == 2:
-                if k == 0:
+                if k >= 0:
                     ax.set_xlabel('A [mK]')
             else:
                 ax.set_xticklabels([])
             if k == 0:
-                if j == 2:
+                if j <= 2:
                     ax.set_ylabel('FWHM [MHz]')
             elif k == 3:
-                if j == 2:
+                if j <= 2:
                     ax.set_ylabel(r'$\tau$')
             else:
                 ax.set_yticklabels([])

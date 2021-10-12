@@ -133,9 +133,9 @@ def plot_rms(rms_arr, figsize=(9, 6), north=True):
             factor = 5/6
         axs[i, 0].text(10, factor*llmax, ant_labels[i], fontsize=MEDIUM_SIZE)
     #    axs[i, 1].text(22, 5/6*epmax, chr(chrstart+2*i+1)+')', fontsize=MEDIUM_SIZE)
-    #    axs[i, 0].set_ylabel('RMS [mK]')
-  #  for i in range(2):
-     #   axs[-1, i].set_xlabel('LST [h]')
+        axs[i, 0].set_ylabel('RMS [mK]')
+    for i in range(2):
+        axs[-1, i].set_xlabel('LST [h]')
     axs[-1, 0].set_xlabel('LST [h]')
     axs[-1, 0].set_ylabel('RMS [mK]')
     axs[0,1].legend(loc='upper center', ncol=2)
@@ -188,12 +188,12 @@ def histogram(*args, no_bins=100):
                 axs[i].xaxis.set_major_locator(LogLocator(base=10, numticks=15))
     titles = ['LinLog', 'EDGES Polynomial']
     for i in range(2):
-   #     axs[-(i+1)].set_xlabel('RMS [mK]')
+        axs[-(i+1)].set_xlabel('RMS [mK]')
         axs[i].set_title(titles[i])
-   # for i in range(3):
-   #     axs[2*i].set_ylabel('Counts')
+    for i in range(3):
+        axs[2*i].set_ylabel('Counts')
     axs[-2].set_xlabel('RMS [mK]')
-    axs[-2].set_ylabel('Counts')
+   # axs[-2].set_ylabel('Counts')
     plt.setp(axs, ylim=(0, 2200), xlim=(0.1, 12000))
     lines = []
     lstyles = []

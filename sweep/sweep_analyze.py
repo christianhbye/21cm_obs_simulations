@@ -282,10 +282,10 @@ def subplot(rms_arr_list, figsize=None):
         ax.grid(linestyle='--')
         if i % 3 == 0:
             ax.text(3, 45, ant_labels[i//3], color='white', fontsize=MEDIUM_SIZE)
-       # if i > 5:
-       #     ax.set_xlabel('LST [h]')
-      #  if i%3 == 0:
-      #      ax.set_ylabel('Latitude [deg]')
+        if i > 5:
+            ax.set_xlabel('LST [h]')
+        if i%3 == 0:
+            ax.set_ylabel('Latitude [deg]')
   #  labs = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]
   #  locs = [10*l for l in labs]
   #  plt.setp(axs, xticks=locs, xticklabels=labs)
