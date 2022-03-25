@@ -1,3 +1,6 @@
 .git-credentials
+.ipynb_checkpoints/
+*__pycache__*
 beams/
 skymap/
+sweep/sky_models/
