@@ -67,7 +67,8 @@ def rms_sweep(ground_plane, simulation, azimuth=0, model='EDGES_polynomial', Nfg
         fhigh = 120
     for lat in it:
         try:
-            f, t, l = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat, ground_plane=ground_plane, simulation=simulation)
+            sweep_lat = "{:.1f}".format(lat)
+            f, t, l = a.get_ftl(azimuth, loc='sweep', sweep_lat=sweep_lat, ground_plane=ground_plane, simulation=simulation)
             if avg:  # just compute rms of avg t
                 if not halfstart:
                     t = np.mean(t, axis=0)
@@ -79,9 +80,10 @@ def rms_sweep(ground_plane, simulation, azimuth=0, model='EDGES_polynomial', Nfg
                 rms = nrms[0]
             else:
                 rms = nrms[:, 0]
-        except:
+        except OSError as e:
             rms = None
             print(lat)
+            print(e)
         if avg:
             rms_arr[it.index] = rms
         else:
