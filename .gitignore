@@ -4,3 +4,4 @@
 beams/
 skymap/
 sweep/sky_models/
+*.npz
