@@ -2,7 +2,7 @@
 #SBATCH --time=18:30:00
 #SBATCH --array=0-120:1
 #SBATCH --nodes=3
-#SBATCH --mail-user=<christian.bye@mail.mcgill.ca>
+#SBATCH --mail-user=<chb@berkeley.edu>
 #SBATCH --mail-type=ALL
 
 source $HOME/conv_env/bin/activate
