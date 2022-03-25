@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mpcolors
 from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
 import paper_plots as pp
+import utils
 
 SMALL_SIZE = 10
 MEDIUM_SIZE = 12
@@ -346,7 +347,7 @@ def plot_waterfalls_diff(f, t, l, ref_t, psi0, ref_psi0, clim=None, savepath=Non
         sp = 'plots/' + savepath + '/diff_' + str(psi0) + '_' + str(ref_psi0)
         plt.savefig(sp)
 
-def compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='EDGES_polynomial'):
+def old_compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='EDGES_polynomial'):
     frequency_vector = f[(f >= flow) & (f <= fhigh)]
     if len(t.shape) == 2:
         temp_array = t[:, (f>=flow) & (f<=fhigh)]
@@ -367,6 +368,30 @@ def compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normalization
             r = temperature_vector - m
             residuals[j, i, :] = r
             # compute rms of residuals
+            rms = np.sqrt(np.sum(r**2)/len(r))
+            rms_values[i, j] = rms
+    return rms_values, residuals
+
+def compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normalization=100, noise_normalizaiton=0.1, noise=False, model_type="EDGES_polynomial"):
+    frequency_vector = f[(f>=flow) & (f<=fhigh)]
+    if len(t.shape) == 2:
+        temp_array = t[:, (f>=flow)&(f<=fhigh)]
+    else:
+        temp_array = t[(f>=flow)&(f<=fhigh)]
+        temp_array = np.expand_dims(temp_array, axis=0)
+    rms_values = np.empty((len(temp_array), len(Nfg_array)))
+    residuals = np.empty((len(Nfg_array), len(temp_array[:, 0]), len(temp_array[0, :])))
+    for j, Nfg in enumerate(Nfg_array):
+        for i in range(len(temp_array)):
+            temperature_vector = temp_array[i, :]
+            if not noise:
+                standard_deviation_vector = np.ones(len(frequency_vector))
+            else:
+                raise NotImplementedError
+            p, _ = utils.fit_EP(frequency_vector, temperature_vector)
+            m = utils.EDGES_polynomial(frequency_vector, p)
+            r = temperature_vector - m
+            residuals[j, i] = r
             rms = np.sqrt(np.sum(r**2)/len(r))
             rms_values[i, j] = rms
     return rms_values, residuals
