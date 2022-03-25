@@ -10,16 +10,16 @@ map_file = '../skymap/haslam408_ds_Remazeilles2014.fits'
 galactic_coord_file = '../skymap/pixel_coords_map_ring_galactic_res9.fits'
 
 antenna = 'bd'
-ground_plane = True
+ground_plane = False  #XXX
 loc = 'sweep'
 lat_sweep = int(sys.argv[1]) * 1.5 - 90
-simulation = 'mini_MIST'
+simulation = 'new_MIST'  #XXX
 lowband = True
 
 if not ground_plane:
-    if simulation == 'new_MIST':
+    if simulation == 'new_MIST':  # small
         beam_file = '../beams/blade_dipole_MARS.out'
-    elif simulation == 'old_MIST':
+    elif simulation == 'old_MIST':  # large
         beam_file = '../beams/blade_dipole.out'
     elif simulation == 'mystery':
         beam_file = '../no_git_files/mystery_antenna.out'
@@ -27,7 +27,7 @@ elif simulation == 'EDGES_highband':
     beam_file = '../no_git_files/EDGES_blade_high_band_infinite.out'
 elif simulation == 'EDGES_lowband':
     beam_file = '../no_git_files/EDGES_low_band_infinite_PEC.out'
-elif simulation == 'mini_MIST':
+elif simulation == 'mini_MIST':  # small + ground plane
     beam_file = '../beams/mini_mist_blade_dipole_3_groundplane_no_boxes.out'
 
 if antenna == 'bd':
@@ -42,7 +42,7 @@ if antenna == 'bd':
         ss = s1 + s2
     path = fs + '/' + ss + '/sweep/lat_' + str(lat_sweep)
 
-sky_model_folder = 'sky_models/blade_dipole/no_ground_plane/old_MIST/sweep/lat_' + str(lat_sweep)
+sky_model_folder = 'sky_models/blade_dipole/metal_ground_plane/mini_MIST/sweep/lat_' + str(lat_sweep)
 save_folder = 'sky_models/' + path 
 if not os.path.exists(save_folder):
     os.makedirs(save_folder)
