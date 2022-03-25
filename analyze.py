@@ -175,9 +175,9 @@ def plot_all_beams(gain_list=None, f=None, derivs=False):
 def polar_beam(gain_list=None, f=None, figsize=None):
     return_gain = False
     if not gain_list:
-        f, az, el, __, __, gain_large = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
-        f_s, az_s, el_s, __, __, gain_small = gen.read_beam_FEKO('no_git_files/blade_dipole_MARS.out', 0)
-        f_gp, az_gp, el_gp, __, __, gain_gp = gen.read_beam_FEKO('no_git_files/mini_mist_blade_dipole_3_groundplane_no_boxes.out', 0)
+        f, az, el, __, __, gain_large = gen.read_beam_FEKO('beams/blade_dipole.out', 0)
+        f_s, az_s, el_s, __, __, gain_small = gen.read_beam_FEKO('beams/blade_dipole_MARS.out', 0)
+        f_gp, az_gp, el_gp, __, __, gain_gp = gen.read_beam_FEKO('beams/mini_mist_blade_dipole_3_groundplane_no_boxes.out', 0)
         assert f.all() == f_s.all()
         assert f.all() == f_gp.all()
         gain_list = [gain_large, gain_small, gain_gp]
@@ -232,9 +232,9 @@ def polar_beam(gain_list=None, f=None, figsize=None):
 def polar_beam_old(gain_list=None, f=None, figsize=None):
     return_gain = False
     if not gain_list:
-        f, az, el, __, __, gain_large = gen.read_beam_FEKO('no_git_files/blade_dipole.out', 0)
-        f_s, az_s, el_s, __, __, gain_small = gen.read_beam_FEKO('no_git_files/blade_dipole_MARS.out', 0)
-        f_gp, az_gp, el_gp, __, __, gain_gp = gen.read_beam_FEKO('no_git_files/mini_mist_blade_dipole_3_groundplane_no_boxes.out', 0)
+        f, az, el, __, __, gain_large = gen.read_beam_FEKO('beams/blade_dipole.out', 0)
+        f_s, az_s, el_s, __, __, gain_small = gen.read_beam_FEKO('beams/blade_dipole_MARS.out', 0)
+        f_gp, az_gp, el_gp, __, __, gain_gp = gen.read_beam_FEKO('beams/mini_mist_blade_dipole_3_groundplane_no_boxes.out', 0)
         assert f.all() == f_s.all()
         assert f.all() == f_gp.all()
         gain_list = [gain_large, gain_small, gain_gp]

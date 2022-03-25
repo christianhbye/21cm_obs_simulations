@@ -89,12 +89,10 @@ def beams(gain_list=None, f=None, derivs=False, aspect='equal', figsize=None, xm
         title = 'Gain [linear units]'
      #   chrstart = 97  # a
     fig.suptitle(title, x=0.72, y=1.)
-#    for i in range(3):
-  #      axs[2*i].set_ylabel(r'$\nu$ [MHz]')
-    axs[4].set_ylabel(r'$\nu$ [MHz]')
-    axs[4].set_xlabel(r'$\theta$ [deg]')
-#    for i in range(2):
-#        axs[-(i+1)].set_xlabel(r'$\theta$ [deg]')
+    for i in range(3):
+        axs[2*i].set_ylabel(r'$\nu$ [MHz]')
+    for i in range(2):
+        axs[-(i+1)].set_xlabel(r'$\theta$ [deg]')
     if not derivs:
          for i in range(3):
 #        label = chr(chrstart+i) + ')'
