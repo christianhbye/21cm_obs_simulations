@@ -4,9 +4,10 @@ import h5py
 import numpy as np
 import os
 import sys
+from importlib import reload
 
-map_file = '../no_git_files/haslam408_ds_Remazeilles2014.fits'
-galactic_coord_file = '../no_git_files/pixel_coords_map_ring_galactic_res9.fits'
+map_file = '../skymap/haslam408_ds_Remazeilles2014.fits'
+galactic_coord_file = '../skymap/pixel_coords_map_ring_galactic_res9.fits'
 
 antenna = 'bd'
 ground_plane = True
@@ -17,9 +18,9 @@ lowband = True
 
 if not ground_plane:
     if simulation == 'new_MIST':
-        beam_file = '../no_git_files/blade_dipole_MARS.out'
+        beam_file = '../beams/blade_dipole_MARS.out'
     elif simulation == 'old_MIST':
-        beam_file = '../no_git_files/blade_dipole.out'
+        beam_file = '../beams/blade_dipole.out'
     elif simulation == 'mystery':
         beam_file = '../no_git_files/mystery_antenna.out'
 elif simulation == 'EDGES_highband':
@@ -27,7 +28,7 @@ elif simulation == 'EDGES_highband':
 elif simulation == 'EDGES_lowband':
     beam_file = '../no_git_files/EDGES_low_band_infinite_PEC.out'
 elif simulation == 'mini_MIST':
-    beam_file = '../no_git_files/mini_mist_blade_dipole_3_groundplane_no_boxes.out'
+    beam_file = '../beams/mini_mist_blade_dipole_3_groundplane_no_boxes.out'
 
 if antenna == 'bd':
     fs = 'blade_dipole'
@@ -130,3 +131,4 @@ while i < N_angles:
             hf.create_dataset('conv_out',  data = conv_out)
             hf.create_dataset('ant_temp_out',  data = ant_temp_out)
         i += 1
+        ast = reload(ast)
