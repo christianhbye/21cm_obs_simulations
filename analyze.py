@@ -372,7 +372,7 @@ def old_compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normaliza
             rms_values[i, j] = rms
     return rms_values, residuals
 
-def compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normalization=100, noise_normalizaiton=0.1, noise=False, model_type="EDGES_polynomial"):
+def compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normalization=100, noise_normalization=0.1, noise=False, model_type="EDGES_polynomial"):
     frequency_vector = f[(f>=flow) & (f<=fhigh)]
     if len(t.shape) == 2:
         temp_array = t[:, (f>=flow)&(f<=fhigh)]
@@ -396,14 +396,23 @@ def compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normalization
             rms_values[i, j] = rms
     return rms_values, residuals
 
-def plot_rms(f, t, lst, flow=40, fhigh=120, Nfg_array=[1, 2, 3, 4, 5, 6], Nfg_split=3, save=False, loc='mars', ground_plane=True, simulation='edges_hb', frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='LINLOG'):
+def plot_rms(psi, f, t, lst, flow=40, fhigh=120, Nfg_array=[1, 2, 3, 4, 5, 6],
+             Nfg_split=3, save=False, loc='mars', sweep_lat=None,
+             ground_plane=True, simulation='mini_MIST',
+             frequency_normalization=100, noise_normalization=0.1, noise=False,
+             model_type='EDGES_polynomial'):
     if type(psi) == int:
-        f, t, lst = get_ftl(psi, loc=loc, ground_plane=ground_plane, simulation=simulation)
+        f, t, lst = get_ftl(psi, loc=loc, sweep_lat=sweep_lat, ground_plane=ground_plane, simulation=simulation)
     rms_values = compute_rms(f, t, flow=flow, fhigh=fhigh, frequency_normalization=frequency_normalization, noise_normalization=noise_normalization, noise=noise, model_type=model_type)[0]
     plt.figure()
-    plt.plot(lst, rms_values[:, :Nfg_split]) # 3 parameters
-    leg_v = Nfg_array[:Nfg_split]
-    leg = [str(n) for n in leg_v]
+    if Nfg_split > 0:
+        plt.plot(lst, rms_values[:, :Nfg_split]) # 3 parameters
+        leg_v = Nfg_array[:Nfg_split]
+        leg = [str(n) for n in leg_v]
+    else:
+        plt.plot(lst, rms_values)
+        leg_v = Nfg_array
+        leg = [str(n) for n in leg_v]    
     l1 = plt.legend(leg, title='Number of parameters:')
     l1._legend_box.align = 'left'
     plt.title(r'RMS (${} \leq \nu \leq {}$) vs LST at $\psi = {}$'.format(flow, fhigh, psi))
