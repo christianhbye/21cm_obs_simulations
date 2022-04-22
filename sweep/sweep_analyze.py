@@ -50,14 +50,29 @@ def rands_nd(array, axis):
         new = array[:, idx]
     return new
 
-def rms_sweep(ground_plane, simulation, azimuth=0, model='EDGES_polynomial', Nfg=6, avg=False, halfstart=None):
+def rms_sweep(
+    ground_plane,
+    simulation,
+    azimuth=0,
+    model='EDGES_polynomial',
+    Nfg=6,
+    avg=False,
+    halfstart=None
+):
     N_lat = 121
-    lat_array = np.linspace(90, -90, N_lat) # 121 latitudes gives 1.5 deg resolution
-    __, __, lst = a.get_ftl(azimuth, loc='sweep', sweep_lat=lat_array[0], ground_plane=ground_plane, simulation=simulation)
+    lat_array = np.linspace(90, -90, N_lat) # 121 latitudes -> 1.5 deg res
+    __, __, lst = a.get_ftl(
+                            azimuth,
+                            loc='sweep', 
+                            sweep_lat=lat_array[0],
+                            ground_plane=ground_plane,
+                            simulation=simulation
+                  )
     if avg:
-        rms_arr = np.empty((N_lat))
+        rms_arr = np.empty((N_lat))  # one rms per lat
     else:
-        rms_arr = np.empty((N_lat, len(lst)))
+        rms_arr = np.empty((N_lat, len(lst)))  # one rms per lat per lst
+    
     it = np.nditer(lat_array, flags=['f_index'])
     if simulation == 'edges_hb':
         flow = 100
@@ -68,18 +83,25 @@ def rms_sweep(ground_plane, simulation, azimuth=0, model='EDGES_polynomial', Nfg
     for lat in it:
         try:
             sweep_lat = "{:.1f}".format(lat)
-            f, t, l = a.get_ftl(azimuth, loc='sweep', sweep_lat=sweep_lat, ground_plane=ground_plane, simulation=simulation)
+            f, t, l = a.get_ftl(
+                                azimuth,
+                                loc='sweep',
+                                sweep_lat=sweep_lat,
+                                ground_plane=ground_plane,
+                                simulation=simulation
+                                )
             if avg:  # just compute rms of avg t
                 if not halfstart:
                     t = np.mean(t, axis=0)
                 else:
                     t = np.mean(t[halfstart, halfstart+120], axis=0)
             assert l.all() == lst.all()
-            nrms = a.compute_rms(f, t, flow, fhigh, Nfg_array=[Nfg], model_type=model)[0]
+            nrms = a.compute_rms(f, t, flow, fhigh, Nfg_array=[Nfg],
+                                 model_type=model)[0]
             if avg:
-                rms = nrms[0]
+                rms = nrms[0]  # index the Nfg (nrms has shape (1,))
             else:
-                rms = nrms[:, 0]
+                rms = nrms[:, 0]  # all lsts, 0 index is for Nfg
         except OSError as e:
             rms = None
             print(lat)
