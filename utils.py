@@ -20,3 +20,18 @@ def EP_fit(nu, a0, a1, a2, a3, a4, a5):
 def fit_EP(freqs, temps, p0=None):
     coeff_opt, pcov = curve_fit(EP_fit, freqs, temps, p0=p0)
     return coeff_opt, pcov
+
+def add_cax(fig, ax, pad=0.01, width=0.02):
+    """
+    Adds colorbar axis next to existing axis in figure.
+    pad = distance to axis
+    width = width of cbar 
+    """
+    pos = [
+           ax.get_position().x1+pad,
+           ax.get_position().y0,
+           width,
+           ax.get_position().height
+          ]
+    cax = fig.add_axes(pos)
+    return cax
