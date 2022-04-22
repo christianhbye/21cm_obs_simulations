@@ -47,7 +47,7 @@ def plot_basic(nrows, ncols, sharex, sharey, figsize, xmajor, xminor, ymajor, ym
     return fig, axs
 
 def beams(gain_list=None, f=None, derivs=False, aspect='equal', figsize=None, xmajor=30, xminor=15, ymajor=20, yminor=10):
-    fig, axs = plot_basic(3, 2, True, True, figsize, xmajor, xminor, ymajor, yminor, dx=0.8, dy=0.8, hspace=0.9, vspace=1.1)
+    fig, axs = plot_basic(3, 2, True, True, figsize, xmajor, xminor, ymajor, yminor, dx=0.8, dy=0.8, hspace=0.8, vspace=1.1)
     return_gain = False
     if not gain_list:
         return_gain = True
@@ -88,16 +88,15 @@ def beams(gain_list=None, f=None, derivs=False, aspect='equal', figsize=None, xm
     else:
         title = 'Gain [linear units]'
      #   chrstart = 97  # a
-    fig.suptitle(title, x=0.72, y=1.)
+    fig.suptitle(title, x=0.72, y=1., fontsize=BIGGER_SIZE)
     for i in range(3):
-        axs[2*i].set_ylabel(r'$\nu$ [MHz]')
+        axs[2*i].set_ylabel('frequency [MHz]')
     for i in range(2):
         axs[-(i+1)].set_xlabel(r'$\theta$ [deg]')
-    if not derivs:
-         for i in range(3):
+    for i in range(3):
 #        label = chr(chrstart+i) + ')'
-             label = ant_labels[i]
-             axs[2*i].text(10, 55, label, color='white', fontsize=MEDIUM_SIZE)
+        label = ant_labels[i]
+        axs[2*i].text(10, 55, label, color='white', fontsize=MEDIUM_SIZE)
     if return_gain:
         return fig, axs, toreturn_gain, f
     else:
@@ -144,8 +143,8 @@ def plot_rms(rms_arr, figsize=(9, 6), north=True):
     axs[0,1].yaxis.set_minor_locator(MultipleLocator(epminor))
     axs[0,1].set_ylim(0, epmax)
     plt.setp(axs, xticks=[0,2,4,6,8,10,12,14,16,18,20,22,24], xlim=(0,24))
-    axs[0, 0].set_title('LinLog', fontsize=MEDIUM_SIZE)
-    axs[0, 1].set_title('EDGES Polynomial', fontsize=MEDIUM_SIZE)
+    axs[0, 0].set_title('LogPoly', fontsize=MEDIUM_SIZE)
+    axs[0, 1].set_title('LinPoly', fontsize=MEDIUM_SIZE)
     return fig, axs
 
 def histogram(*args, no_bins=100):
