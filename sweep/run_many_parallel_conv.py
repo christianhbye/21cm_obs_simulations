@@ -13,7 +13,7 @@ antenna = 'bd'
 ground_plane = False  #XXX
 loc = 'sweep'
 lat_sweep = int(sys.argv[1]) * 1.5 - 90
-simulation = 'new_MIST'  #XXX
+simulation = 'old_MIST'  #XXX
 lowband = True
 
 if not ground_plane:
@@ -63,9 +63,9 @@ if not os.path.exists(sky_model_folder) or not save_fname in os.listdir(sky_mode
     os.chdir(work_dir)
     sky_model_folder = save_folder
 
-start_angle = 0 # first azimuth angle
+start_angle = 90 #XXX first azimuth angle
 delta_phi = 30 # when sweeping azimuth angles, phi increments by this number each iteration
-N_angles = int((180 - start_angle)/delta_phi)
+N_angles = int((150 - start_angle)/delta_phi) #XXX (only 90+120)
 # master_lst = []
 # master_freq = []
 # master_conv = []
@@ -81,8 +81,10 @@ i = 0
 while i < N_angles:
     azimuth = i * delta_phi + start_angle
     print('azimuth = {}'.format(azimuth))
-    if 'save_parallel_convolution_' + str(azimuth) in os.listdir(save_folder):
-        i += 1
+    #if 'save_parallel_convolution_' + str(azimuth) in os.listdir(save_folder):
+    #    i += 1
+    if False: #XXX
+        print("Fails")
     else:
         if beam_file[-4:] == '.out':
             freq_array_X, AZ_beam, EL_beam, Et_shifted, Ep_shifted, gain_shifted = gen.read_beam_FEKO(beam_file, azimuth)
