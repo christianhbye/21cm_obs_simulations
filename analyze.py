@@ -192,15 +192,16 @@ def polar_beam(gain_list=None, f=None, figsize=None):
     axs = []
     el = np.deg2rad(np.arange(-91, 91))
     ant_label = ['Large', 'Small', 'Small +\n'+'ground plane']
+    v_factor = 0.8
     for i, gain in enumerate(gain_list):  # loop over rows / antenna models
         if gain.shape[-1] == 361:
             gain = gain[:, :, :-1] # cut last angle since 0 = 360 degrees
         gain = gain[:, ::-1, :] # changing from elevation to theta
-        ax1 = fig.add_axes([0, -i*dy, dx, dy], polar=True, label=str(i)+'1')
+        ax1 = fig.add_axes([0, -i*dy*v_factor, dx, dy], polar=True, label=str(i)+'1')
         axs.append(ax1)
     #    ax1.text(np.pi/4, 14, chr(97+2*i)+')', size=MEDIUM_SIZE)
         ax1.text(np.pi/4, 14, ant_label[i], size=MEDIUM_SIZE)
-        ax2 = fig.add_axes([0.8*dx, -i*dy, dx, dy], polar=True, label=str(i)+'2')
+        ax2 = fig.add_axes([0.8*dx, -i*dy*v_factor, dx, dy], polar=True, label=str(i)+'2')
        # ax2.text(np.pi/4, 14, chr(97+2*i+1)+')', size=MEDIUM_SIZE)
         axs.append(ax2)
         for j, find in enumerate(find_to_plot):  # loop over the frequencies to plot gain for in each panel
@@ -215,7 +216,7 @@ def polar_beam(gain_list=None, f=None, figsize=None):
     plt.setp(axs, theta_zero_location='N')
     plt.setp(axs, thetamin=-90, thetamax=90)
     handles, labels = axs[-1].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.7*dx, -2*dy), ncol=3)
+    fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.7*dx, -1.5*dy), ncol=3)
     for ax in axs:
         ax.set_rgrids([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], ['0', ' ', '2', ' ', '4', ' ', '6', ' ', '8', ' '], angle=22.5)
 #        ax.text(-8*np.pi/4, 1, 'Gain')
@@ -293,30 +294,34 @@ def plot_temp(freq_vector, temp_array, LST_vec, LST_idxs, azimuth, savepath=None
         plt.savefig('plots/' + savepath + '/temp')
 
 def plot_temp_3d(freq_vector, lst_vector, temp_array_N, temp_array_S, figsize=None):   
-    fig, axs = pp.plot_basic(2, 1, True, True, figsize, 10, 5, None, None, dx=0.8, dy=0.8, vspace=1.1, customy=True)
+    fig, axs = pp.plot_basic(2, 1, True, True, figsize, 10, 5, None, None, dx=0.6, dy=0.8, vspace=.97, customy=True)
+    ASPECT = 2.5
     if freq_vector[0] > 1e6:
         freq_vector /= 1e6 # convert to MHz
     freq_min = freq_vector[0]
     freq_max = freq_vector[-1]
     LST_min = lst_vector[0]
     LST_max = lst_vector[-1]
-    im = axs[0].imshow(temp_array_N, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min], interpolation='none')
+    im = axs[0].imshow(temp_array_N, aspect=ASPECT, extent=[freq_min, freq_max, LST_max, LST_min], interpolation='none')
     nticks = [0, 2000, 4000, 6000, 8000, 10000]
     sticks = [0, 5000, 10000, 15000, 20000]
-    cbarN = fig.colorbar(im, ax=axs[0], ticks=nticks)
+  #  cax = fig.add_axes([0.62, 0.06, 0.03, 0.68])
+    cax = utils.add_cax(fig, axs[0])
+    cbarN = fig.colorbar(im, cax=cax, ticks=nticks)
     cbarN.set_ticklabels([str(t) for t in nticks])
-    cbarN.set_label("[K]", labelpad=15)
+    cbarN.set_label("[K]")
     im.set_clim(0, 10000)
-    im2 = axs[1].imshow(temp_array_S, aspect='auto', extent=[freq_min, freq_max, LST_max, LST_min], interpolation='none')
-    cbarS = fig.colorbar(im2, ax=axs[1], ticks=sticks)
+    im2 = axs[1].imshow(temp_array_S, aspect=ASPECT, extent=[freq_min, freq_max, LST_max, LST_min], interpolation='none')
+    cax = utils.add_cax(fig, axs[1])
+    cbarS = fig.colorbar(im2, cax=cax, ticks=sticks)
     cbarS.set_ticklabels([str(t) for t in sticks])
-    cbarS.set_label("[K]", labelpad=15)
+    cbarS.set_label("[K]")
     im2.set_clim(0, 20000)
     plt.setp(axs, ylabel='LST [h]')
    # axs[1].set_ylabel('LST [h]')
-    axs[1].set_xlabel('Frequency [MHz]')
-    axs[0].text(98, 2, r'$79.5^{\circ}$ N', color='white', fontsize=MEDIUM_SIZE)
-    axs[1].text(98, 2, r'$24.0^{\circ}$ S', color='white', fontsize=MEDIUM_SIZE)
+    axs[1].set_xlabel('frequency [MHz]')
+    axs[0].text(98, 3, r'$79.5^{\circ}$ N', color='white', fontsize=MEDIUM_SIZE)
+    axs[1].text(98, 3, r'$24.0^{\circ}$ S', color='white', fontsize=MEDIUM_SIZE)
     yticks = [0, 4, 8, 12, 16, 20, 24]
    # locs = [10*t for t in yticks]
   #  locs[-1] = 241
@@ -374,15 +379,15 @@ def old_compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normaliza
 
 def compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normalization=100, noise_normalization=0.1, noise=False, model_type="EDGES_polynomial"):
     frequency_vector = f[(f>=flow) & (f<=fhigh)]
-    if len(t.shape) == 2:
+    if len(t.shape) == 2:  # has lst info
         temp_array = t[:, (f>=flow)&(f<=fhigh)]
     else:
         temp_array = t[(f>=flow)&(f<=fhigh)]
-        temp_array = np.expand_dims(temp_array, axis=0)
-    rms_values = np.empty((len(temp_array), len(Nfg_array)))
+        temp_array = np.expand_dims(temp_array, axis=1)
+    rms_values = np.empty((len(Nfg_array), len(temp_array[:, 0])))
     residuals = np.empty((len(Nfg_array), len(temp_array[:, 0]), len(temp_array[0, :])))
     for j, Nfg in enumerate(Nfg_array):
-        for i in range(len(temp_array)):
+        for i in range(len(temp_array)):  # each lst
             temperature_vector = temp_array[i, :]
             if not noise:
                 standard_deviation_vector = np.ones(len(frequency_vector))
@@ -393,7 +398,7 @@ def compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normalization
             r = temperature_vector - m
             residuals[j, i] = r
             rms = np.sqrt(np.sum(r**2)/len(r))
-            rms_values[i, j] = rms
+            rms_values[j, i] = rms
     return rms_values, residuals
 
 def plot_rms(psi, f, t, lst, flow=40, fhigh=120, Nfg_array=[1, 2, 3, 4, 5, 6],
