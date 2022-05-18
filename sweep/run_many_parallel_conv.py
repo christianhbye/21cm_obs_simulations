@@ -13,7 +13,7 @@ antenna = 'bd'
 ground_plane = False  #XXX
 loc = 'sweep'
 lat_sweep = int(sys.argv[1]) * 1.5 - 90
-simulation = 'old_MIST'  #XXX
+simulation = 'new_MIST'  #XXX
 lowband = True
 
 if not ground_plane:
@@ -71,20 +71,8 @@ if not os.path.exists(sky_model_folder) or not save_fname in os.listdir(sky_mode
     os.chdir(work_dir)
     sky_model_folder = save_folder
 
-#start_angle = 0 #XXX first azimuth angle
-#delta_phi = 30 # when sweeping azimuth angles, phi increments by this number each iteration
-#N_angles = int((150 - start_angle)/delta_phi) #XXX (only 90+120)
-# master_lst = []
-# master_freq = []
-# master_conv = []
-# master_ant_temp = []
 
-#print('Start, delta, N:')
-#print(start_angle)
-#print(delta_phi)
-#print(N_angles)
-
-angles = [0, 90, 120]
+angles = [0, 90, 120]  # XXX
 N_angles = len(angles)
 
 i = 0
@@ -116,8 +104,8 @@ while i < N_angles:
         beam_all = beam_all_X[(freq_array_X >= FLOW) & (freq_array_X <= FHIGH), :, :]
         print(f"{freq_array=}")
         if beam_all.shape[-1] == 361:
-            beam_all     = beam_all[:, :, 0:-1] # cut out last col because 0 = 360
-            AZ_beam = AZ_beam[0:-1] # cut out last column, same as for beam_all
+            beam_all     = beam_all[:, :, :-1] # cut out last col because 0 = 360
+            AZ_beam = AZ_beam[:-1] # cut out last column, same as for beam_all
         print('Sky model')
         # Sky model
         map_freq = 408
@@ -126,21 +114,12 @@ while i < N_angles:
         # Local Coordinates
         LST, AZ_lst, EL_lst = gen.read_hdf5_LST_AZ_EL(lst_az_el_file)
         print(LST.shape)
+        print(AZ_lst.shape)
+        print(EL_lst.shape)
         print('Convolution')
 #       lst_out, freq_out, ant_temp_out = ast.parallel_convolution(LST, freq_array, AZ_beam, EL_beam, beam_all, AZ_lst, EL_lst, sky_model, 40, normalization='yes', normalization_solid_angle_above_horizon_freq=1)
-        lst_out, freq_out, conv_out, ant_temp_out = ast.parallel_convolution(LST, freq_array, AZ_beam, EL_beam, beam_all, AZ_lst, EL_lst, sky_model, 40, normalization='yes', normalization_solid_angle_above_horizon_freq=1)
-        print(lst_out)
-        print(freq_out)
-        print(conv_out.shape)
-#       master_lst.append(lst_out)
-#       master_freq.append(freq_out)
-#       master_conv.append(conv_out)
-#       master_ant_temp.append(ant_temp_out)
+        lst_out, freq_out, conv_out, ant_temp_out = ast.parallel_convolution(LST, freq_array, AZ_beam, EL_beam, beam_all, AZ_lst, EL_lst, sky_model, 40)
 
-#     master_lst = np.array(master_lst)
-#     master_freq = np.array(master_freq)
-#     master_conv = np.array(master_conv)
-#     master_ant_temp = np.array(master_ant_temp)
 
         with h5py.File(save_folder+'/save_parallel_convolution_'+str(azimuth), 'w') as hf:
             hf.create_dataset('LST_out', data = lst_out)
