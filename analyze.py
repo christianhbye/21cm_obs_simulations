@@ -354,18 +354,17 @@ def plot_waterfalls_diff(f, t, l, ref_t, psi0, ref_psi0, clim=None, savepath=Non
 
 def old_compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normalization=100, noise_normalization=0.1, noise=False, model_type='EDGES_polynomial'):
     frequency_vector = f[(f >= flow) & (f <= fhigh)]
-    if len(t.shape) == 2:
-        temp_array = t[:, (f>=flow) & (f<=fhigh)]
-    else:
-        temp_array = t[(f>=flow) & (f<=fhigh)]
-        temp_array = np.expand_dims(temp_array, axis=0)
-    rms_values = np.empty((len(temp_array), len(Nfg_array)))
-    residuals = np.empty((len(Nfg_array), len(temp_array[:, 0]), len(temp_array[0, :])))
+    if t.ndim == 1:
+        t.shape = (1, -1)
+    temp_array = t[:, (f>=flow)&(f<=fhigh)]
+    nlsts, nfreqs = temp_array.shape
+    rms_values = np.empty((len(Nfg_array), nlsts))
+    residuals = np.empty((len(Nfg_array), nlsts, nfreqs))
     for j, Nfg in enumerate(Nfg_array):
-        for i in range(len(temp_array)):
+        for i in range(nlsts):
             temperature_vector = temp_array[i, :]
             if not noise:
-                standard_deviation_vector = np.ones(len(frequency_vector)) # no noise
+                standard_deviation_vector = np.ones(nfreqs)
             else:
                 standard_deviation_vector = noise_normalization * temperature_vector/temperature_vector[frequency_vector == frequency_normalization]
             p = gen.fit_polynomial_fourier(model_type, frequency_vector/frequency_normalization, temperature_vector, int(Nfg), Weights=1/(standard_deviation_vector**2))
@@ -374,30 +373,29 @@ def old_compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normaliza
             residuals[j, i, :] = r
             # compute rms of residuals
             rms = np.sqrt(np.sum(r**2)/len(r))
-            rms_values[i, j] = rms
+            rms_values[j, i] = rms
     return rms_values, residuals
 
 def compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normalization=100, noise_normalization=0.1, noise=False, model_type="EDGES_polynomial"):
     frequency_vector = f[(f>=flow) & (f<=fhigh)]
-    if len(t.shape) == 2:  # has lst info
-        temp_array = t[:, (f>=flow)&(f<=fhigh)]
-    else:
-        temp_array = t[(f>=flow)&(f<=fhigh)]
-        temp_array = np.expand_dims(temp_array, axis=1)
-    rms_values = np.empty((len(Nfg_array), len(temp_array[:, 0])))
-    residuals = np.empty((len(Nfg_array), len(temp_array[:, 0]), len(temp_array[0, :])))
+    if t.ndim == 1:
+        t.shape = (1, -1)
+    temp_array = t[:, (f>=flow)&(f<=fhigh)]
+    nlsts, nfreqs = temp_array.shape
+    rms_values = np.empty((len(Nfg_array), nlsts))
+    residuals = np.empty((len(Nfg_array), nlsts, nfreqs))
     for j, Nfg in enumerate(Nfg_array):
-        for i in range(len(temp_array)):  # each lst
+        for i in range(nlsts):  # each lst
             temperature_vector = temp_array[i, :]
             if not noise:
-                standard_deviation_vector = np.ones(len(frequency_vector))
+                standard_deviation_vector = np.ones(nfreqs)
             else:
                 raise NotImplementedError
             p, _ = utils.fit_EP(frequency_vector, temperature_vector)
             m = utils.EDGES_polynomial(frequency_vector, p)
             r = temperature_vector - m
             residuals[j, i] = r
-            rms = np.sqrt(np.sum(r**2)/len(r))
+            rms = np.sqrt(np.mean(r**2))
             rms_values[j, i] = rms
     return rms_values, residuals
 

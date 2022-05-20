@@ -73,14 +73,13 @@ def rms_sweep(
     else:
         rms_arr = np.empty((N_lat, len(lst)))  # one rms per lat per lst
     
-    it = np.nditer(lat_array, flags=['f_index'])
     if simulation == 'edges_hb':
         flow = 100
         fhigh = 190
     else:
         flow = 40
         fhigh = 120
-    for lat in it:
+    for index, lat in enumerate(lat_array):
         try:
             sweep_lat = "{:.1f}".format(lat)
             f, t, l = a.get_ftl(
@@ -95,21 +94,19 @@ def rms_sweep(
                     t = np.mean(t, axis=0)
                 else:
                     t = np.mean(t[halfstart, halfstart+120], axis=0)
-            assert l.all() == lst.all()
+            assert all(l == lst)
             nrms = a.compute_rms(f, t, flow, fhigh, Nfg_array=[Nfg],
                                  model_type=model)[0]
-            if avg:
-                rms = nrms[0]  # index the Nfg (nrms has shape (1,))
-            else:
-                rms = nrms[:, 0]  # all lsts, 0 index is for Nfg
+         #   if avg:
+         #       rms = nrms[0]  # index the Nfg (nrms has shape (1,))
+         #   else:
+         #       rms = nrms[:, 0]  # all lsts, 0 index is for Nfg
+            rms = nrms[0]
         except OSError as e:
             rms = None
             print(lat)
             print(e)
-        if avg:
-            rms_arr[it.index] = rms
-        else:
-            rms_arr[it.index, :] = rms
+        rms_arr[index] = rms
     return rms_arr
 
 
