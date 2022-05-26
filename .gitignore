@@ -5,3 +5,4 @@ beams/
 skymap/
 sweep/sky_models/
 *.npz
+april_plots/data/
