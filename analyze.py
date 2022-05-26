@@ -391,8 +391,12 @@ def compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normalization
                 standard_deviation_vector = np.ones(nfreqs)
             else:
                 raise NotImplementedError
-            p, _ = utils.fit_EP(frequency_vector, temperature_vector)
-            m = utils.EDGES_polynomial(frequency_vector, p)
+            if model_type.lower() == "edges_polynomial":
+                p, _ = utils.fit_EP(frequency_vector, temperature_vector, N=Nfg)
+                m = utils.EDGES_polynomial(frequency_vector, p)
+            elif model_type.lower() == "linlog":
+                p, _ = utils.fit_ll(frequency_vector, temperature_vector, N=Nfg)
+                m = utils.linlog(frequency_vector, p)
             r = temperature_vector - m
             residuals[j, i] = r
             rms = np.sqrt(np.mean(r**2))
