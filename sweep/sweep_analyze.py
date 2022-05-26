@@ -207,6 +207,7 @@ def get_hist(antenna_type, model, Nfg_array=[5, 6, 7], azimuths=[0, 90, 120], no
         ground_plane = False
     data = []
     for az in azimuths:
+        print(f"{antenna_type}: {az=}")
         for N in Nfg_array:
             rms = rms_sweep(ground_plane, antenna_type, az, model=model, Nfg=N)
             rms_mk = rms.flatten() * 1000  # convert to mK
@@ -216,23 +217,40 @@ def get_hist(antenna_type, model, Nfg_array=[5, 6, 7], azimuths=[0, 90, 120], no
     return data, logbins
 
 def plot_hist():
-    fig, axs = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
-    axs[0, 0].set_ylabel('Counts')
-    axs[1, 0].set_ylabel('Counts')
-    axs[2, 0].set_ylabel('Counts')
-    axs[2, 0].set_xlabel('RMS [mK]')
-    axs[2, 1].set_xlabel('RMS [mK]')
+    fig, axs = plt.subplots(
+        figsize=(15,8), nrows=3, ncols=2, sharex=True, sharey=True
+    )
+    ylabel = "counts"
+    axs[0, 0].set_ylabel(ylabel, fontsize=14)
+    axs[1, 0].set_ylabel(ylabel, fontsize=14)
+    axs[2, 0].set_ylabel(ylabel, fontsize=14)
+    axs[2, 0].set_xlabel('RMS [mK]', fontsize=14)
+    axs[2, 1].set_xlabel('RMS [mK]', fontsize=14)
     plt.setp(axs, xscale='log')
-    handles = [Line2D([0], [0], color='C0', lw=4), Line2D([0], [0], color='C1', lw=4), Line2D([0], [0], color='C2', lw=4)]
-    handles.append(Line2D([0], [0], color='black', lw=4, ls='solid'))
-    handles.append(Line2D([0], [0], color='black', lw=4, ls='dashed'))
-    handles.append(Line2D([0], [0], color='black', lw=4, ls='dotted'))
-    fig.legend(handles=handles, labels=['N=5', 'N=6', 'N=7', r'$\psi_0=0 \degree$', r'$\psi_0=90 \degree$', r'$\psi_0=120 \degree$'])
+    handles = [
+        Line2D([0], [0], color='black', lw=2),
+        Line2D([0], [0], color='blue', lw=2),
+        Line2D([0], [0], color='red', lw=2)
+    ]
+    handles.append(Line2D([0], [0], color='black', lw=2, ls='solid'))
+    handles.append(Line2D([0], [0], color='black', lw=2, ls='dashed'))
+    handles.append(Line2D([0], [0], color='black', lw=2, ls='dotted'))
+    axs[0,0].legend(
+        handles=handles,
+        labels=[
+            'N=5', 'N=6', 'N=7', r'$\psi_0=0 \degree$',
+            r'$\psi_0=90 \degree$', r'$\psi_0=120 \degree$'
+        ],
+        ncol=2,
+        loc="upper left",
+    )
 #    plt.show()
+    plt.tight_layout()
     return fig, axs
 
 def add_hist(ax, data, logbins):
-    carray = ['C0', 'C1', 'C2'] * 3
+    #carray = ['C0', 'C1', 'C2'] * 3
+    carray = ["black", "blue", "red"] * 3
     lss = ['solid', 'dashed', 'dotted']
     for i in range(9):
         ls = lss[int(i/3)] 
@@ -306,7 +324,7 @@ def subplot(rms_arr_list, figsize=None):
         if i > 5:
             ax.set_xlabel('LST [h]')
         if i%3 == 0:
-            ax.set_ylabel('Latitude [deg]')
+            ax.set_ylabel('latitude [deg]')
   #  labs = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]
   #  locs = [10*l for l in labs]
   #  plt.setp(axs, xticks=locs, xticklabels=labs)
@@ -319,7 +337,7 @@ def subplot(rms_arr_list, figsize=None):
  #   for i in range(3):
  #       axs[3*i].set_ylabel('Latitude [deg]')
  #       axs[6+i].set_xlabel('LST [h]')
-    axs[-3].set_ylabel('Latitude [deg]')
+    axs[-3].set_ylabel('latitude [deg]')
     axs[-3].set_xlabel('LST [h]')
     azs = [0, 90, 120]
     for i in range(3):
