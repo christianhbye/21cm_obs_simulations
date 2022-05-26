@@ -380,7 +380,7 @@ def old_compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normaliza
 def compute_rms(f, t, flow=40, fhigh=120, Nfg_array=[6], frequency_normalization=100, noise_normalization=0.1, noise=False, model_type="EDGES_polynomial"):
     frequency_vector = f[(f>=flow) & (f<=fhigh)]
     if t.ndim == 1:
-        t.shape = (1, -1)
+        t = t.reshape(1, -1)
     temp_array = t[:, (f>=flow)&(f<=fhigh)]
     nlsts, nfreqs = temp_array.shape
     rms_values = np.empty((len(Nfg_array), nlsts))
@@ -651,7 +651,7 @@ def add_Gaussian(f, t, width, amplitude, centre=80):
     exponential /= 2 * sigma **2
     signal = amplitude * np.exp(-1 * exponential)
     newt = t.copy()
-    if len(newt.shape) == 1:
+    if newt.ndim == 1:
         newt += signal
     else:
         print('shucks')
