@@ -751,7 +751,7 @@ def plot_gauss_edges(gauss40, gauss80, gauss120, edges, log10=True, vmin=1, vmax
     tau_arr = np.linspace(0, 30, 121)
     fig = plt.figure()
     dx, dy = 0.4, 0.4
-    hspace1, hspace2, vspace = 1.1, 1.3, 1.1 
+    hspace1, hspace2, vspace = 1.15, 1.3, 1.1 
 #    fig, axs = plt.subplots(figsize=(12,8), nrows=6, ncols=4, sharex=True, sharey='col', gridspec_kw={'hspace':0.15, 'wspace':0.2})
     if log10:
         norm = mpcolors.LogNorm()
@@ -785,7 +785,7 @@ def plot_gauss_edges(gauss40, gauss80, gauss120, edges, log10=True, vmin=1, vmax
             im.set_clim(vmin, vmax)
             if k == 0:
                 ax.text(4/3*250, ypos, ant_labels[j], color=labelc, fontsize=MEDIUM_SIZE)
- #           ax.scatter(xc, yc, facecolors='none', edgecolors='white')
+            ax.scatter(xc, yc, facecolors='none', edgecolors='white')
             if j == 2:
                 if k >= 0:
                     ax.set_xlabel('A [mK]')
@@ -803,7 +803,9 @@ def plot_gauss_edges(gauss40, gauss80, gauss120, edges, log10=True, vmin=1, vmax
                 ax.set_title(col_title[k])
     cax = fig.add_axes([2*dx*hspace1+dx*hspace2+dx*1.05, -2*dy*vspace, 0.1*dx, 2*dy*vspace+dy])
     cticks = [1, 10, 50, 100, 150]
-    cbar = fig.colorbar(im, cax=cax, ticks=cticks)
+    cbar = fig.colorbar(
+        im, cax=cax, ticks=cticks, label="RMS [no units]"
+    )
     cbar.set_ticklabels([str(t) for t in cticks])
 #    axs[0].xaxis.set_major_locator(MultipleLocator(250))
 #    axs[0,0].xaxis.set_minor_locator(MultipleLocator(125))
