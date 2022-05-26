@@ -495,13 +495,13 @@ def sliding_average(array, window_length, cycle=True):
     return avg
 
 def sliding_average2d(temp, bin_width):
-    t_avg_arr = np.empty(temp.shape)
+    t_avg_arr = np.empty_like(temp)
     for i in range(temp.shape[1]):
         t_avg_arr[:, i] = sliding_average(temp[:, i], bin_width)
     return t_avg_arr
 
 
-def sliding_binLST(f_in, temp, bin_width, model='LINLOG', band='low', Nfg=5):
+def sliding_binLST(f_in, temp, bin_width, model='LINLOG', band='low', Nfg=6):
     if band == 'low':
         flow = 40
         fhigh = 120
@@ -513,7 +513,9 @@ def sliding_binLST(f_in, temp, bin_width, model='LINLOG', band='low', Nfg=5):
     t_avg_arr = sliding_average2d(temp, bin_width)
     rms_vals = np.empty(temp.shape[0])
     for i, t_avg in enumerate(t_avg_arr):
-        rms, res = compute_rms(f, t_avg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg])
+        rms, res = compute_rms(
+            f, t_avg, flow=flow, fhigh=fhigh, model_type=model, Nfg_array=[Nfg]
+        )
         rms_vals[i] = rms[0, 0]
     return rms_vals
 
@@ -619,7 +621,7 @@ def subplot_LSTbins(rms_arr_super, vmin, vmax):
         cticks = [1, 10, 50, 100, 120]
     elif vmin == 10 and vmax == 500:
         cticks = [10, 50, 100, 200, 300, 400, 500]
-    cax = fig.add_axes([(3-1)*0.5*1.1+0.5+0.025, -2*0.5*1.05, 0.075, (3-1)*0.5*1.05+0.5])
+    cax = fig.add_axes([(3-1)*0.5*1.1+0.5+0.025, -2*0.5*1.05, 0.05, (3-1)*0.5*1.05+0.5])
     cbar = fig.colorbar(im, cax=cax, ticks=cticks)
     cbar.set_label('RMS [mK]')
     cbar.set_ticklabels([str(t) for t in cticks])
@@ -628,13 +630,15 @@ def subplot_LSTbins(rms_arr_super, vmin, vmax):
         for j in range(2):
             axs[3*i+j+1].set_yticklabels([])
     for i in range(3):
-        axs[3*i].set_ylabel('Bin Width [h]')
+        axs[3*i].set_ylabel('bin width [h]')
         axs[-(i+1)].set_xlabel('LST [h]')
     axs[-3].set_xlabel('LST [h]')
-    axs[-3].set_ylabel('Bin Width [h]')
+    axs[-3].set_ylabel('bin width [h]')
     azs = [0, 90, 120]
     for i in range(3):
-        axs[i].set_title(r'$\psi_0 = {:d} \degree$'.format(azs[i]))
+        axs[i].set_title(
+            r'$\psi_0 = {:d} \degree$'.format(azs[i]), fontsize=15
+        )
     return fig, axs
 
 def add_Gaussian(f, t, width, amplitude, centre=80):
