@@ -37,10 +37,11 @@ def read_hdf5(azimuth, varname, loc, sweep_lat=None, ground_plane=True, simulati
         g1 = 'no_ground_plane/'
         g2 = simulation + '/'
     gpath = g1 + g2
+    if loc.lower() == "mars":
+        loc = 'sweep'
+        sweep_lat = 79.5
     if loc == 'sweep':
         path = 'sweep/sky_models/blade_dipole/' + gpath + 'sweep/lat_' + str(sweep_lat) + '/save_parallel_convolution_' + str(azimuth)
-    else:
-        path = 'no_git_files/sky_models/blade_dipole/' + gpath + loc + '/save_parallel_convolution_' + str(azimuth)
     with h5py.File(parent_path + path, 'r') as hf:
 #        print([key for key in hf.keys()])
         var=hf.get(varname)
